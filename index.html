@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Farmer Circle Trade Journal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <main id="auth-view" class="auth-layout">
+        <section class="brand-panel" aria-label="Farmer Circle">
+          <div class="wordmark">
+            <div class="brand-mark">F</div>
+            <strong>Farmer <span>Circle</span></strong>
+          </div>
+
+          <div class="brand-story">
+            <p class="eyebrow">FTC Jember · Trading Command Center</p>
+            <h1>Sistem yang konsisten selalu menang lawan <span>feeling yang naik-turun.</span></h1>
+            <p class="lead">
+              Satu tempat buat jurnal trade, analisa intraday, dan review performa, biar keputusan lo based on data,
+              bukan mood hari ini.
+            </p>
+
+            <div class="market-frame" aria-hidden="true">
+              <svg viewBox="0 0 540 220" preserveAspectRatio="none">
+                <line x1="0" x2="540" y1="40" y2="40" />
+                <line x1="0" x2="540" y1="82" y2="82" class="gold-line" />
+                <line x1="0" x2="540" y1="112" y2="112" class="purple-line" />
+                <line x1="0" x2="540" y1="145" y2="145" class="gold-line" />
+                <line x1="0" x2="540" y1="184" y2="184" />
+                <text x="505" y="36">0.0</text>
+                <text x="496" y="78">0.382</text>
+                <text x="496" y="108">0.618</text>
+                <text x="496" y="141">0.786</text>
+                <text x="505" y="180">1.0</text>
+                <polyline points="24,174 55,142 88,160 122,80 154,112 188,70 222,96 256,52 290,79 324,118 358,73 392,104 426,62 460,91 498,58" />
+                <g class="candles">
+                  <rect x="48" y="138" width="9" height="34" />
+                  <rect x="116" y="78" width="9" height="64" />
+                  <rect x="184" y="69" width="9" height="44" />
+                  <rect x="252" y="52" width="9" height="28" />
+                  <rect x="320" y="78" width="9" height="40" />
+                  <rect x="388" y="72" width="9" height="32" />
+                  <rect x="456" y="58" width="9" height="33" />
+                </g>
+              </svg>
+            </div>
+
+            <div class="feature-pills" aria-label="Fitur Farmer Circle">
+              <span>Jurnal Trade</span>
+              <span>Analisa Intraday</span>
+              <span>Backtest & Performance</span>
+              <span>Daily Bias</span>
+            </div>
+          </div>
+
+          <footer class="brand-footer">
+            <span>© 2026 Farmer Trader Community</span>
+            <span>Jember · Lumajang · Probolinggo · Banyuwangi</span>
+          </footer>
+        </section>
+
+        <section class="login-panel" aria-label="Login">
+          <div class="login-switch" aria-hidden="true">
+            <span>Masuk</span>
+          </div>
+
+          <div class="panel-heading">
+            <h2>Selamat balik, Bro</h2>
+            <p>Masuk buat lanjutin sistem trading lo.</p>
+          </div>
+
+          <form id="login-form" class="form-stack" novalidate>
+            <label>
+              <span>Email</span>
+              <input id="email" type="email" autocomplete="email" placeholder="nama@email.com" required />
+            </label>
+
+            <label>
+              <span>Password</span>
+              <div class="password-wrap">
+                <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" required minlength="6" />
+                <button class="show-password" id="toggle-password" type="button" aria-label="Tampilkan password">
+                  <span>SHOW</span>
+                </button>
+              </div>
+            </label>
+
+            <div class="login-options">
+              <label class="remember-option">
+                <input id="remember-me" type="checkbox" checked />
+                <span>Inget gua</span>
+              </label>
+              <button id="forgot-password" class="link-button" type="button">Lupa password?</button>
+            </div>
+
+            <p id="login-error" class="form-error" role="alert"></p>
+
+            <button id="login-button" class="primary-button" type="submit">
+              <span>Masuk</span>
+            </button>
+          </form>
+
+          <div class="setup-note">
+            <p>Secure login by Supabase Auth. Tidak ada halaman daftar publik.</p>
+          </div>
+        </section>
+      </main>
+
+      <main id="dashboard-view" class="dashboard-layout hidden">
+        <aside class="sidebar">
+          <div class="brand-row">
+            <div class="brand-mark small">FC</div>
+            <div>
+              <strong>Farmer Circle</strong>
+              <span id="user-role">member</span>
+            </div>
+          </div>
+
+          <nav class="side-nav" aria-label="Dashboard">
+            <button class="nav-item active" type="button" data-section="journal-section">
+              <i data-lucide="notebook-pen"></i>
+              <span>Jurnal Trade</span>
+            </button>
+            <button class="nav-item" type="button" data-section="bias-section">
+              <i data-lucide="radar"></i>
+              <span>Daily Bias</span>
+            </button>
+          </nav>
+
+          <button id="logout-button" class="ghost-button" type="button">
+            <i data-lucide="log-out"></i>
+            <span>Keluar</span>
+          </button>
+        </aside>
+
+        <section class="content-area">
+          <header class="topbar">
+            <div>
+              <p class="eyebrow">Dashboard</p>
+              <h2 id="welcome-title">Trade Journal</h2>
+            </div>
+            <div class="user-chip">
+              <i data-lucide="user-round"></i>
+              <span id="user-email">-</span>
+            </div>
+          </header>
+
+          <section id="journal-section" class="workspace-section">
+            <div class="split-layout">
+              <form id="trade-form" class="editor-panel" novalidate>
+                <input id="trade-id" type="hidden" />
+                <div class="section-heading">
+                  <h3 id="trade-form-title">Tambah Jurnal</h3>
+                  <button id="cancel-edit-trade" class="icon-button hidden" type="button" aria-label="Batalkan edit">
+                    <i data-lucide="x"></i>
+                  </button>
+                </div>
+
+                <div class="grid-2">
+                  <label>
+                    <span>Tanggal</span>
+                    <input id="trade-date" type="date" required />
+                  </label>
+                  <label>
+                    <span>Pair</span>
+                    <input id="trade-pair" type="text" placeholder="XAUUSD" required maxlength="24" />
+                  </label>
+                </div>
+
+                <div class="grid-2">
+                  <label>
+                    <span>Setup</span>
+                    <input id="trade-setup" type="text" placeholder="Liquidity sweep" required maxlength="80" />
+                  </label>
+                  <label>
+                    <span>Arah</span>
+                    <select id="trade-direction" required>
+                      <option value="long">Long</option>
+                      <option value="short">Short</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div class="grid-3">
+                  <label>
+                    <span>Entry</span>
+                    <input id="trade-entry" type="number" step="0.00001" required />
+                  </label>
+                  <label>
+                    <span>Stop Loss</span>
+                    <input id="trade-stop" type="number" step="0.00001" />
+                  </label>
+                  <label>
+                    <span>Take Profit</span>
+                    <input id="trade-target" type="number" step="0.00001" />
+                  </label>
+                </div>
+
+                <div class="grid-2">
+                  <label>
+                    <span>Risk %</span>
+                    <input id="trade-risk" type="number" min="0" max="100" step="0.01" />
+                  </label>
+                  <label>
+                    <span>Hasil R</span>
+                    <input id="trade-result" type="number" step="0.01" placeholder="2.5 atau -1" />
+                  </label>
+                </div>
+
+                <label>
+                  <span>Catatan</span>
+                  <textarea id="trade-notes" rows="4" placeholder="Alasan entry, emosi, management trade"></textarea>
+                </label>
+
+                <p id="trade-error" class="form-error" role="alert"></p>
+
+                <button id="save-trade-button" class="primary-button" type="submit">
+                  <i data-lucide="save"></i>
+                  <span>Simpan Jurnal</span>
+                </button>
+              </form>
+
+              <div class="list-panel">
+                <div class="section-heading">
+                  <h3>Riwayat Trade</h3>
+                  <button id="refresh-trades" class="icon-button" type="button" aria-label="Refresh jurnal">
+                    <i data-lucide="refresh-cw"></i>
+                  </button>
+                </div>
+                <div id="trade-list" class="item-list"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="bias-section" class="workspace-section hidden">
+            <div class="split-layout">
+              <form id="bias-form" class="editor-panel hidden" novalidate>
+                <input id="bias-id" type="hidden" />
+                <div class="section-heading">
+                  <h3 id="bias-form-title">Upload Daily Bias</h3>
+                  <button id="cancel-edit-bias" class="icon-button hidden" type="button" aria-label="Batalkan edit">
+                    <i data-lucide="x"></i>
+                  </button>
+                </div>
+
+                <label>
+                  <span>Judul</span>
+                  <input id="bias-title" type="text" placeholder="Bias sesi London" required maxlength="120" />
+                </label>
+
+                <div class="grid-2">
+                  <label>
+                    <span>Market</span>
+                    <input id="bias-market" type="text" placeholder="XAUUSD / BTC / EURUSD" required maxlength="40" />
+                  </label>
+                  <label>
+                    <span>Arah Bias</span>
+                    <select id="bias-direction" required>
+                      <option value="bullish">Bullish</option>
+                      <option value="bearish">Bearish</option>
+                      <option value="neutral">Neutral</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label>
+                  <span>Konten</span>
+                  <textarea id="bias-content" rows="8" placeholder="Area penting, invalidation, skenario entry" required></textarea>
+                </label>
+
+                <p id="bias-error" class="form-error" role="alert"></p>
+
+                <button id="save-bias-button" class="primary-button" type="submit">
+                  <i data-lucide="upload-cloud"></i>
+                  <span>Publish Daily Bias</span>
+                </button>
+              </form>
+
+              <div class="list-panel wide">
+                <div class="section-heading">
+                  <h3>Daily Bias Terbaru</h3>
+                  <button id="refresh-biases" class="icon-button" type="button" aria-label="Refresh daily bias">
+                    <i data-lucide="refresh-cw"></i>
+                  </button>
+                </div>
+                <div id="bias-list" class="item-list"></div>
+              </div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
