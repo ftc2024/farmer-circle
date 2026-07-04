@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const AVATAR_BUCKET = "avatars";
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024;
 const $ = (selector) => document.querySelector(selector);
 let supabasePromise;
 
@@ -42,8 +43,20 @@ function getInitials(name) {
 function paintAvatar(selector, name, avatarUrl) {
   const element = $(selector);
   if (!element) return;
+
   element.textContent = avatarUrl ? "" : getInitials(name);
-  element.style.backgroundImage = avatarUrl ? `url("${avatarUrl}")` : "linear-gradient(135deg, var(--purple), var(--cyan))";
+
+  if (avatarUrl) {
+    element.style.setProperty("background-image", `url("${avatarUrl}")`, "important");
+    element.style.setProperty("background-size", "cover", "important");
+    element.style.setProperty("background-position", "center", "important");
+    element.style.setProperty("background-repeat", "no-repeat", "important");
+  } else {
+    element.style.setProperty("background-image", "linear-gradient(135deg, var(--purple), var(--cyan))", "important");
+    element.style.setProperty("background-size", "cover", "important");
+    element.style.setProperty("background-position", "center", "important");
+    element.style.setProperty("background-repeat", "no-repeat", "important");
+  }
 }
 
 async function getCurrentUser(client) {
@@ -100,12 +113,13 @@ async function uploadAvatar(event) {
     const user = await getCurrentUser(client);
     if (!user) throw new Error("Session login tidak ditemukan. Coba login ulang.");
 
-    if (!file.type.startsWith("image/")) {
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
       throw new Error("File harus berupa gambar JPG, PNG, atau WEBP.");
     }
 
-    if (file.size > 3 * 1024 * 1024) {
-      throw new Error("Ukuran foto maksimal 3MB.");
+    if (file.size > MAX_AVATAR_SIZE) {
+      throw new Error("Ukuran foto maksimal 5MB. Pilih gambar yang lebih kecil.");
     }
 
     const name = $("#profile-name")?.value.trim() || user.user_metadata?.full_name || user.email?.split("@")[0] || "Trader";
@@ -116,7 +130,7 @@ async function uploadAvatar(event) {
 
     const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const safeExtension = ["jpg", "jpeg", "png", "webp"].includes(extension) ? extension : "jpg";
-    const avatarPath = `${user.id}/avatar-${Date.now()}.${safeExtension}`;
+    const avatarPath = `${user.id}/avatar.${safeExtension}`;
 
     const { error: uploadError } = await client.storage
       .from(AVATAR_BUCKET)
