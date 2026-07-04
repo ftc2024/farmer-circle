@@ -125,7 +125,11 @@
           </div>
 
           <nav class="side-nav" aria-label="Dashboard">
-            <button class="nav-item active" type="button" data-section="journal-section">
+            <button class="nav-item active" type="button" data-section="performance-section">
+              <i data-lucide="chart-no-axes-combined"></i>
+              <span>Performance</span>
+            </button>
+            <button class="nav-item" type="button" data-section="journal-section">
               <i data-lucide="notebook-pen"></i>
               <span>Jurnal Trade</span>
             </button>
@@ -145,7 +149,7 @@
           <header class="topbar">
             <div>
               <p class="eyebrow">Dashboard</p>
-              <h2 id="welcome-title">Trade Journal</h2>
+              <h2 id="welcome-title">Performance Dashboard</h2>
             </div>
             <div class="user-chip">
               <i data-lucide="user-round"></i>
@@ -153,7 +157,103 @@
             </div>
           </header>
 
-          <section id="journal-section" class="workspace-section">
+          <section id="performance-section" class="workspace-section">
+            <div class="performance-header">
+              <div>
+                <p class="eyebrow small-eyebrow">Trading Analytics</p>
+                <h3>Ringkasan performa sistem lo</h3>
+                <p>Semua angka dihitung dari jurnal trade yang sudah punya hasil R.</p>
+              </div>
+              <button id="refresh-analytics" class="ghost-button compact" type="button">
+                <i data-lucide="refresh-cw"></i>
+                <span>Refresh</span>
+              </button>
+            </div>
+
+            <div class="filter-panel">
+              <label>
+                <span>Pair</span>
+                <select id="analytics-pair-filter">
+                  <option value="all">Semua pair</option>
+                </select>
+              </label>
+              <label>
+                <span>Setup</span>
+                <select id="analytics-setup-filter">
+                  <option value="all">Semua setup</option>
+                </select>
+              </label>
+              <label>
+                <span>Hasil</span>
+                <select id="analytics-result-filter">
+                  <option value="all">Semua hasil</option>
+                  <option value="win">Win only</option>
+                  <option value="loss">Loss only</option>
+                  <option value="breakeven">Breakeven</option>
+                  <option value="open">Belum close</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="stats-grid">
+              <article class="stat-card">
+                <span>Total Trade</span>
+                <strong id="stat-total-trades">0</strong>
+                <small id="stat-closed-trades">0 closed</small>
+              </article>
+              <article class="stat-card">
+                <span>Win Rate</span>
+                <strong id="stat-win-rate">0%</strong>
+                <small id="stat-win-loss">0W / 0L</small>
+              </article>
+              <article class="stat-card accent">
+                <span>Net Result</span>
+                <strong id="stat-net-r">0R</strong>
+                <small id="stat-avg-r">Avg 0R/trade</small>
+              </article>
+              <article class="stat-card">
+                <span>Profit Factor</span>
+                <strong id="stat-profit-factor">-</strong>
+                <small id="stat-best-worst">Best 0R · Worst 0R</small>
+              </article>
+            </div>
+
+            <div class="analytics-grid">
+              <article class="analytics-card large">
+                <div class="section-heading">
+                  <h3>Equity Curve</h3>
+                  <span class="mini-label">Cumulative R</span>
+                </div>
+                <div id="equity-chart" class="chart-box"></div>
+              </article>
+
+              <article class="analytics-card">
+                <div class="section-heading">
+                  <h3>Monthly Performance</h3>
+                  <span class="mini-label">Net R / bulan</span>
+                </div>
+                <div id="monthly-chart" class="bar-chart"></div>
+              </article>
+
+              <article class="analytics-card">
+                <div class="section-heading">
+                  <h3>Pair Breakdown</h3>
+                  <span class="mini-label">Top pair</span>
+                </div>
+                <div id="pair-breakdown" class="breakdown-list"></div>
+              </article>
+
+              <article class="analytics-card">
+                <div class="section-heading">
+                  <h3>Insight Cepat</h3>
+                  <span class="mini-label">Auto read</span>
+                </div>
+                <div id="quick-insights" class="insight-list"></div>
+              </article>
+            </div>
+          </section>
+
+          <section id="journal-section" class="workspace-section hidden">
             <div class="split-layout">
               <form id="trade-form" class="editor-panel" novalidate>
                 <input id="trade-id" type="hidden" />

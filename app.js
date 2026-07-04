@@ -30,6 +30,22 @@ const elements = {
   welcomeTitle: $("#welcome-title"),
   navItems: document.querySelectorAll(".nav-item"),
   sections: document.querySelectorAll(".workspace-section"),
+  refreshAnalytics: $("#refresh-analytics"),
+  analyticsPairFilter: $("#analytics-pair-filter"),
+  analyticsSetupFilter: $("#analytics-setup-filter"),
+  analyticsResultFilter: $("#analytics-result-filter"),
+  statTotalTrades: $("#stat-total-trades"),
+  statClosedTrades: $("#stat-closed-trades"),
+  statWinRate: $("#stat-win-rate"),
+  statWinLoss: $("#stat-win-loss"),
+  statNetR: $("#stat-net-r"),
+  statAvgR: $("#stat-avg-r"),
+  statProfitFactor: $("#stat-profit-factor"),
+  statBestWorst: $("#stat-best-worst"),
+  equityChart: $("#equity-chart"),
+  monthlyChart: $("#monthly-chart"),
+  pairBreakdown: $("#pair-breakdown"),
+  quickInsights: $("#quick-insights"),
   tradeForm: $("#trade-form"),
   tradeError: $("#trade-error"),
   tradeList: $("#trade-list"),
@@ -88,6 +104,10 @@ function formatDate(value) {
   return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(new Date(value));
 }
 
+function formatMonth(value) {
+  return new Intl.DateTimeFormat("id-ID", { month: "short", year: "2-digit" }).format(new Date(`${value}-01T00:00:00`));
+}
+
 function normalizeNumber(value) {
   if (value === "" || value === null || value === undefined) return null;
   return Number(value);
@@ -97,6 +117,26 @@ function escapeText(value) {
   const div = document.createElement("div");
   div.textContent = value ?? "";
   return div.innerHTML;
+}
+
+function isClosedTrade(trade) {
+  return trade.result_r !== null && trade.result_r !== undefined && !Number.isNaN(Number(trade.result_r));
+}
+
+function getTradeResult(trade) {
+  return Number(trade.result_r);
+}
+
+function formatR(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return "-";
+  const number = Number(value);
+  const sign = number > 0 ? "+" : "";
+  return `${sign}${number.toFixed(2).replace(/\.00$/, "")}R`;
+}
+
+function formatPercent(value) {
+  if (Number.isNaN(value) || !Number.isFinite(value)) return "0%";
+  return `${value.toFixed(value % 1 === 0 ? 0 : 1)}%`;
 }
 
 async function bootstrap() {
@@ -204,11 +244,13 @@ async function loadTrades() {
 
   if (error) {
     elements.tradeList.innerHTML = `<div class="empty-state">Gagal memuat jurnal: ${escapeText(error.message)}</div>`;
+    renderAnalytics();
     return;
   }
 
   state.trades = data ?? [];
   renderTrades();
+  renderAnalytics();
 }
 
 function renderTrades() {
@@ -254,6 +296,289 @@ function renderTrades() {
     .join("");
 
   if (window.lucide) window.lucide.createIcons();
+}
+
+function fillFilterOptions(select, values, defaultLabel) {
+  if (!select) return;
+
+  const currentValue = select.value || "all";
+  const uniqueValues = [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  select.innerHTML = `
+    <option value="all">${defaultLabel}</option>
+    ${uniqueValues.map((value) => `<option value="${escapeText(value)}">${escapeText(value)}</option>`).join("")}
+  `;
+
+  select.value = uniqueValues.includes(currentValue) ? currentValue : "all";
+}
+
+function getFilteredTrades() {
+  const pair = elements.analyticsPairFilter?.value ?? "all";
+  const setup = elements.analyticsSetupFilter?.value ?? "all";
+  const result = elements.analyticsResultFilter?.value ?? "all";
+
+  return state.trades.filter((trade) => {
+    const resultValue = isClosedTrade(trade) ? getTradeResult(trade) : null;
+    const pairMatch = pair === "all" || trade.pair === pair;
+    const setupMatch = setup === "all" || trade.setup === setup;
+    const resultMatch =
+      result === "all" ||
+      (result === "open" && resultValue === null) ||
+      (result === "win" && resultValue > 0) ||
+      (result === "loss" && resultValue < 0) ||
+      (result === "breakeven" && resultValue === 0);
+
+    return pairMatch && setupMatch && resultMatch;
+  });
+}
+
+function calculateStats(trades) {
+  const closedTrades = trades.filter(isClosedTrade);
+  const results = closedTrades.map(getTradeResult);
+  const wins = results.filter((value) => value > 0);
+  const losses = results.filter((value) => value < 0);
+  const breakeven = results.filter((value) => value === 0);
+  const grossProfit = wins.reduce((sum, value) => sum + value, 0);
+  const grossLoss = Math.abs(losses.reduce((sum, value) => sum + value, 0));
+  const netR = results.reduce((sum, value) => sum + value, 0);
+  const avgR = closedTrades.length ? netR / closedTrades.length : 0;
+
+  return {
+    total: trades.length,
+    closed: closedTrades.length,
+    open: trades.length - closedTrades.length,
+    wins: wins.length,
+    losses: losses.length,
+    breakeven: breakeven.length,
+    winRate: closedTrades.length ? (wins.length / closedTrades.length) * 100 : 0,
+    netR,
+    avgR,
+    profitFactor: grossLoss > 0 ? grossProfit / grossLoss : null,
+    best: results.length ? Math.max(...results) : 0,
+    worst: results.length ? Math.min(...results) : 0,
+  };
+}
+
+function renderAnalytics() {
+  fillFilterOptions(elements.analyticsPairFilter, state.trades.map((trade) => trade.pair), "Semua pair");
+  fillFilterOptions(elements.analyticsSetupFilter, state.trades.map((trade) => trade.setup), "Semua setup");
+
+  const filteredTrades = getFilteredTrades();
+  const stats = calculateStats(filteredTrades);
+
+  elements.statTotalTrades.textContent = stats.total;
+  elements.statClosedTrades.textContent = `${stats.closed} closed · ${stats.open} open`;
+  elements.statWinRate.textContent = formatPercent(stats.winRate);
+  elements.statWinLoss.textContent = `${stats.wins}W / ${stats.losses}L / ${stats.breakeven}BE`;
+  elements.statNetR.textContent = formatR(stats.netR);
+  elements.statAvgR.textContent = `Avg ${formatR(stats.avgR)} / trade`;
+  elements.statProfitFactor.textContent = stats.profitFactor === null ? "∞" : stats.profitFactor.toFixed(2);
+  elements.statBestWorst.textContent = `Best ${formatR(stats.best)} · Worst ${formatR(stats.worst)}`;
+
+  renderEquityChart(filteredTrades);
+  renderMonthlyChart(filteredTrades);
+  renderPairBreakdown(filteredTrades);
+  renderQuickInsights(filteredTrades, stats);
+}
+
+function renderEquityChart(trades) {
+  const closedTrades = [...trades]
+    .filter(isClosedTrade)
+    .sort((a, b) => new Date(a.trade_date) - new Date(b.trade_date));
+
+  if (!closedTrades.length) {
+    elements.equityChart.innerHTML = '<div class="empty-state compact-empty">Belum ada closed trade untuk equity curve.</div>';
+    return;
+  }
+
+  const values = closedTrades.reduce(
+    (acc, trade) => {
+      acc.push(acc[acc.length - 1] + getTradeResult(trade));
+      return acc;
+    },
+    [0]
+  );
+
+  const width = 720;
+  const height = 260;
+  const padding = 28;
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  const range = maxValue - minValue || 1;
+
+  const points = values
+    .map((value, index) => {
+      const x = padding + (index / Math.max(values.length - 1, 1)) * (width - padding * 2);
+      const y = height - padding - ((value - minValue) / range) * (height - padding * 2);
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  const zeroY = height - padding - ((0 - minValue) / range) * (height - padding * 2);
+
+  elements.equityChart.innerHTML = `
+    <svg class="equity-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Equity curve">
+      <line x1="${padding}" x2="${width - padding}" y1="${zeroY}" y2="${zeroY}" class="zero-line" />
+      <polyline points="${points}" />
+      <circle cx="${width - padding}" cy="${points.split(" ").at(-1).split(",")[1]}" r="5" />
+      <text x="${padding}" y="22">Start 0R</text>
+      <text x="${width - 170}" y="22">Now ${formatR(values.at(-1))}</text>
+    </svg>
+  `;
+}
+
+function renderMonthlyChart(trades) {
+  const closedTrades = trades.filter(isClosedTrade);
+
+  if (!closedTrades.length) {
+    elements.monthlyChart.innerHTML = '<div class="empty-state compact-empty">Belum ada data bulanan.</div>';
+    return;
+  }
+
+  const monthly = new Map();
+  closedTrades.forEach((trade) => {
+    const key = trade.trade_date.slice(0, 7);
+    monthly.set(key, (monthly.get(key) ?? 0) + getTradeResult(trade));
+  });
+
+  const rows = [...monthly.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-6);
+
+  const maxAbs = Math.max(...rows.map(([, value]) => Math.abs(value)), 1);
+
+  elements.monthlyChart.innerHTML = rows
+    .map(([month, value]) => {
+      const height = Math.max(8, (Math.abs(value) / maxAbs) * 112);
+      const type = value >= 0 ? "positive" : "negative";
+      return `
+        <div class="bar-item">
+          <div class="bar-track">
+            <span class="bar ${type}" style="height: ${height}px"></span>
+          </div>
+          <strong>${formatR(value)}</strong>
+          <small>${formatMonth(month)}</small>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function groupTradesByPair(trades) {
+  const groups = new Map();
+
+  trades.filter(isClosedTrade).forEach((trade) => {
+    const pair = trade.pair || "Unknown";
+    const result = getTradeResult(trade);
+    const item = groups.get(pair) ?? { pair, total: 0, wins: 0, netR: 0 };
+    item.total += 1;
+    item.wins += result > 0 ? 1 : 0;
+    item.netR += result;
+    groups.set(pair, item);
+  });
+
+  return [...groups.values()]
+    .map((item) => ({
+      ...item,
+      winRate: item.total ? (item.wins / item.total) * 100 : 0,
+    }))
+    .sort((a, b) => b.netR - a.netR);
+}
+
+function renderPairBreakdown(trades) {
+  const pairs = groupTradesByPair(trades).slice(0, 6);
+
+  if (!pairs.length) {
+    elements.pairBreakdown.innerHTML = '<div class="empty-state compact-empty">Belum ada closed trade per pair.</div>';
+    return;
+  }
+
+  elements.pairBreakdown.innerHTML = pairs
+    .map((item) => `
+      <div class="breakdown-row">
+        <div>
+          <strong>${escapeText(item.pair)}</strong>
+          <small>${item.total} trade · WR ${formatPercent(item.winRate)}</small>
+        </div>
+        <span class="${item.netR >= 0 ? "positive-text" : "negative-text"}">${formatR(item.netR)}</span>
+      </div>
+    `)
+    .join("");
+}
+
+function getCurrentStreak(trades) {
+  const closedTrades = [...trades]
+    .filter(isClosedTrade)
+    .sort((a, b) => new Date(b.trade_date) - new Date(a.trade_date));
+
+  if (!closedTrades.length) return "Belum ada streak.";
+
+  const firstResult = getTradeResult(closedTrades[0]);
+  if (firstResult === 0) return "Trade terakhir breakeven.";
+
+  const isWin = firstResult > 0;
+  let count = 0;
+
+  for (const trade of closedTrades) {
+    const result = getTradeResult(trade);
+    if ((isWin && result > 0) || (!isWin && result < 0)) {
+      count += 1;
+    } else {
+      break;
+    }
+  }
+
+  return `${count} ${isWin ? "win" : "loss"} beruntun`;
+}
+
+function getMostFrequentSetup(trades) {
+  const counts = new Map();
+  trades.forEach((trade) => {
+    if (!trade.setup) return;
+    counts.set(trade.setup, (counts.get(trade.setup) ?? 0) + 1);
+  });
+
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
+}
+
+function renderQuickInsights(trades, stats) {
+  const closedTrades = trades.filter(isClosedTrade);
+  const pairRows = groupTradesByPair(trades);
+  const bestPair = pairRows[0];
+  const worstPair = [...pairRows].sort((a, b) => a.netR - b.netR)[0];
+  const setup = getMostFrequentSetup(trades);
+  const streak = getCurrentStreak(trades);
+
+  const insights = [
+    {
+      label: "Bias performa",
+      value: stats.netR > 0 ? "Sistem lagi positif." : stats.netR < 0 ? "Sistem lagi drawdown." : "Masih netral.",
+    },
+    {
+      label: "Best pair",
+      value: bestPair ? `${bestPair.pair} (${formatR(bestPair.netR)})` : "Belum ada data.",
+    },
+    {
+      label: "Pair perlu review",
+      value: worstPair ? `${worstPair.pair} (${formatR(worstPair.netR)})` : "Belum ada data.",
+    },
+    {
+      label: "Setup paling sering",
+      value: setup ? `${setup[0]} · ${setup[1]}x` : "Belum ada setup.",
+    },
+    {
+      label: "Current streak",
+      value: closedTrades.length ? streak : "Belum ada closed trade.",
+    },
+  ];
+
+  elements.quickInsights.innerHTML = insights
+    .map((item) => `
+      <div class="insight-row">
+        <span>${escapeText(item.label)}</span>
+        <strong>${escapeText(item.value)}</strong>
+      </div>
+    `)
+    .join("");
 }
 
 async function saveTrade(event) {
@@ -308,6 +633,10 @@ function editTrade(id) {
   tradeFields.notes.value = trade.notes ?? "";
   elements.tradeFormTitle.textContent = "Edit Jurnal";
   elements.cancelEditTrade.classList.remove("hidden");
+
+  elements.navItems.forEach((navItem) => navItem.classList.toggle("active", navItem.dataset.section === "journal-section"));
+  elements.sections.forEach((section) => section.classList.toggle("hidden", section.id !== "journal-section"));
+  elements.welcomeTitle.textContent = "Trade Journal";
 }
 
 function resetTradeForm() {
@@ -459,12 +788,16 @@ async function deleteBias(id) {
 function bindEvents() {
   elements.loginForm.addEventListener("submit", handleLogin);
   elements.logoutButton.addEventListener("click", () => supabase.auth.signOut());
+  elements.refreshAnalytics.addEventListener("click", loadTrades);
   elements.refreshTrades.addEventListener("click", loadTrades);
   elements.refreshBiases.addEventListener("click", loadBiases);
   elements.tradeForm.addEventListener("submit", saveTrade);
   elements.biasForm.addEventListener("submit", saveBias);
   elements.cancelEditTrade.addEventListener("click", resetTradeForm);
   elements.cancelEditBias.addEventListener("click", resetBiasForm);
+  elements.analyticsPairFilter.addEventListener("change", renderAnalytics);
+  elements.analyticsSetupFilter.addEventListener("change", renderAnalytics);
+  elements.analyticsResultFilter.addEventListener("change", renderAnalytics);
 
   elements.togglePassword.addEventListener("click", () => {
     const isPassword = elements.password.type === "password";
@@ -488,7 +821,7 @@ function bindEvents() {
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin,
+      redirectTo: `${window.location.origin}/farmer-circle/`,
     });
 
     setError(
@@ -500,9 +833,15 @@ function bindEvents() {
   elements.navItems.forEach((item) => {
     item.addEventListener("click", () => {
       const sectionId = item.dataset.section;
+      const titleMap = {
+        "performance-section": "Performance Dashboard",
+        "journal-section": "Trade Journal",
+        "bias-section": "Daily Bias",
+      };
+
       elements.navItems.forEach((navItem) => navItem.classList.toggle("active", navItem === item));
       elements.sections.forEach((section) => section.classList.toggle("hidden", section.id !== sectionId));
-      elements.welcomeTitle.textContent = sectionId === "bias-section" ? "Daily Bias" : "Trade Journal";
+      elements.welcomeTitle.textContent = titleMap[sectionId] ?? "Dashboard";
     });
   });
 
