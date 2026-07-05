@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const AVATAR_BUCKET = "avatars";
-const MAX_AVATAR_SIZE = 5 * 1024 * 1024;
+const AVATAR_BUCKET = "profile-photos";
+const MAX_AVATAR_SIZE = 3 * 1024 * 1024;
 const $ = (selector) => document.querySelector(selector);
 let supabasePromise;
 
@@ -119,7 +119,7 @@ async function uploadAvatar(event) {
     }
 
     if (file.size > MAX_AVATAR_SIZE) {
-      throw new Error("Ukuran foto maksimal 5MB. Pilih gambar yang lebih kecil.");
+      throw new Error("Ukuran foto maksimal 3MB. Pilih gambar yang lebih kecil.");
     }
 
     const name = $("#profile-name")?.value.trim() || user.user_metadata?.full_name || user.email?.split("@")[0] || "Trader";
