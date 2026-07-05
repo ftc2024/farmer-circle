@@ -3,10 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const BIAS_BUCKET = "daily-bias-screenshots";
 const MAX_BIAS_IMAGE_SIZE = 10 * 1024 * 1024;
 const $ = (selector, root = document) => root.querySelector(selector);
-const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 let supabasePromise;
-let cachedRole = null;
 let renderBusy = false;
+let lastRole = "";
 
 async function getClient() {
   if (supabasePromise) return supabasePromise;
@@ -28,16 +27,24 @@ async function getSessionUser(client) {
   return data.session?.user || null;
 }
 
-async function getRole(client, user) {
-  if (!user) return "";
-  if (cachedRole) return cachedRole;
-  const { data } = await client.from("profiles").select("role").eq("id", user.id).maybeSingle();
-  cachedRole = data?.role || user.user_metadata?.role || "user";
-  return cachedRole;
+function pageRole() {
+  return String($("#user-role")?.textContent || lastRole || "").trim().toLowerCase();
 }
 
 function canManage(role) {
-  return ["admin", "mentor"].includes(role);
+  return ["admin", "mentor"].includes(String(role || "").trim().toLowerCase());
+}
+
+async function getRole(client, user) {
+  const visible = pageRole();
+  if (canManage(visible)) {
+    lastRole = visible;
+    return visible;
+  }
+  if (!user) return visible || "";
+  const { data } = await client.from("profiles").select("role").eq("id", user.id).maybeSingle();
+  lastRole = String(data?.role || user.user_metadata?.role || visible || "member").trim().toLowerCase();
+  return lastRole;
 }
 
 function text(selector, value = "") {
@@ -59,19 +66,6 @@ function fmtDate(value) {
   }
 }
 
-function enhanceDailyBiasForm() {
-  const form = $("#bias-form");
-  if (!form || $("#bias-screenshot")) return;
-  const target = $("#bias-error") || form.querySelector("button[type='submit']");
-  const html = `
-    <label class="bias-shot-field">
-      <span>Screenshot Analisa</span>
-      <input id="bias-screenshot" type="file" accept="image/jpeg,image/png,image/webp" />
-      <small>Opsional. JPG, PNG, atau WebP maksimal 10MB.</small>
-    </label>`;
-  target?.insertAdjacentHTML("beforebegin", html);
-}
-
 function injectStyles() {
   if ($("#daily-bias-storage-style")) return;
   const style = document.createElement("style");
@@ -84,6 +78,29 @@ function injectStyles() {
     .bias-shot-grid a:hover { text-decoration: underline; }
   `;
   document.head.appendChild(style);
+}
+
+function enhanceDailyBiasForm() {
+  const form = $("#bias-form");
+  if (!form) return;
+  if (!$("#bias-screenshot")) {
+    const target = $("#bias-error") || form.querySelector("button[type='submit']");
+    target?.insertAdjacentHTML("beforebegin", `
+      <label class="bias-shot-field">
+        <span>Screenshot Analisa</span>
+        <input id="bias-screenshot" type="file" accept="image/jpeg,image/png,image/webp" />
+        <small>Opsional. JPG, PNG, atau WebP maksimal 10MB.</small>
+      </label>`);
+  }
+}
+
+function stabilizeForm(role = pageRole()) {
+  const form = $("#bias-form");
+  if (!form) return;
+  const allowed = canManage(role);
+  form.classList.toggle("hidden", !allowed);
+  form.style.display = allowed ? "" : "none";
+  enhanceDailyBiasForm();
 }
 
 async function uploadBiasScreenshot(client, user, biasId, file, title) {
@@ -136,11 +153,20 @@ async function renderDailyBiases() {
   if (!list || renderBusy) return;
   renderBusy = true;
 
+  if (!list.innerHTML.trim()) {
+    list.innerHTML = '<div class="empty-state">Memuat daily bias...</div>';
+  }
+
   try {
     const client = await getClient();
     const user = await getSessionUser(client);
-    if (!user) return;
+    if (!user) {
+      list.innerHTML = '<div class="empty-state">Login dulu untuk melihat Daily Bias.</div>';
+      return;
+    }
+
     const role = await getRole(client, user);
+    stabilizeForm(role);
     const editable = canManage(role);
 
     const { data: biases, error } = await client
@@ -255,17 +281,18 @@ async function saveDailyBias(event) {
     text("#bias-error", error.message || "Gagal menyimpan daily bias.");
   } finally {
     if (button) button.disabled = false;
-    if (buttonText) buttonText.textContent = "Simpan Daily Bias";
+    if (buttonText) buttonText.textContent = "Publish Daily Bias";
   }
 }
 
 async function handleBiasClick(event) {
+  const nav = event.target.closest?.('[data-section="bias-section"]');
   const edit = event.target.closest?.("[data-edit-bias]");
   const del = event.target.closest?.("[data-delete-bias]");
   const refresh = event.target.closest?.("#refresh-biases");
 
-  if (refresh) {
-    setTimeout(renderDailyBiases, 600);
+  if (nav || refresh) {
+    setTimeout(() => { stabilizeFromServer(); renderDailyBiases(); }, 350);
     return;
   }
 
@@ -288,6 +315,7 @@ async function handleBiasClick(event) {
     if (fileInput) fileInput.value = "";
     text("#bias-form-title", "Edit Daily Bias");
     $("#cancel-edit-bias")?.classList.remove("hidden");
+    stabilizeForm("mentor");
     return;
   }
 
@@ -312,11 +340,29 @@ async function handleBiasClick(event) {
   }
 }
 
+async function stabilizeFromServer() {
+  try {
+    injectStyles();
+    enhanceDailyBiasForm();
+    const client = await getClient();
+    const user = await getSessionUser(client);
+    const role = await getRole(client, user);
+    stabilizeForm(role);
+    const list = $("#bias-list");
+    if (list && !list.innerHTML.trim()) list.innerHTML = '<div class="empty-state">Memuat daily bias...</div>';
+  } catch {
+    stabilizeForm(pageRole());
+  }
+}
+
 function boot() {
   injectStyles();
   enhanceDailyBiasForm();
-  setTimeout(renderDailyBiases, 1200);
-  setTimeout(renderDailyBiases, 2600);
+  stabilizeForm(pageRole());
+  setTimeout(stabilizeFromServer, 500);
+  setTimeout(renderDailyBiases, 900);
+  setTimeout(() => { stabilizeFromServer(); renderDailyBiases(); }, 1800);
+  setTimeout(() => { stabilizeFromServer(); renderDailyBiases(); }, 3600);
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
@@ -326,5 +372,7 @@ document.addEventListener("submit", saveDailyBias, true);
 document.addEventListener("click", handleBiasClick, true);
 setInterval(() => {
   enhanceDailyBiasForm();
-  if ($("#bias-list") && !$("#bias-list [data-bias-storage-card]") && !renderBusy) renderDailyBiases();
-}, 2500);
+  stabilizeForm(pageRole());
+  const list = $("#bias-list");
+  if (list && (!list.innerHTML.trim() || list.textContent.trim() === "Daily Bias Terbaru") && !renderBusy) renderDailyBiases();
+}, 1800);
