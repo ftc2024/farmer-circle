@@ -3,7 +3,7 @@
 // Default provider is AUTO:
 // 1) ForexFactory/FairEconomy weekly XML feed
 // 2) Financial Modeling Prep economic-calendar endpoint
-// 3) Farmer Circle sample fallback
+// 3) Farmer Circle sample fallback only when every live source is unavailable
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,20 +35,41 @@ function json(body: unknown, status = 200) {
   });
 }
 
-function dateKey(date: Date) {
-  return date.toISOString().slice(0, 10);
+function timezoneOffsetHours(timezone: string) {
+  const match = String(timezone || "").match(/GMT\s*([+-]?\d+(?:\.\d+)?)/i);
+  if (match) return Number(match[1]);
+  if (timezone === "Asia/Jakarta") return 7;
+  return 0;
 }
 
-function getDateWindow(range: string) {
-  const now = new Date();
-  const start = new Date(now);
-  const end = new Date(now);
+function localDateFromOffset(offsetHours: number) {
+  return new Date(Date.now() + offsetHours * 60 * 60 * 1000);
+}
+
+function dateKey(date: Date) {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
+
+function getDateWindow(range: string, timezone = "GMT+7") {
+  const offset = timezoneOffsetHours(timezone);
+  const today = localDateFromOffset(offset);
+  let start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  let end = new Date(start);
 
   if (range === "tomorrow") {
-    start.setDate(start.getDate() + 1);
-    end.setDate(end.getDate() + 1);
+    start = addDays(start, 1);
+    end = addDays(end, 1);
   } else if (range === "week") {
-    end.setDate(end.getDate() + 7);
+    const day = start.getUTCDay();
+    const diffToMonday = day === 0 ? 1 : 1 - day;
+    start = addDays(start, diffToMonday);
+    end = addDays(start, 5);
   }
 
   return { from: dateKey(start), to: dateKey(end) };
@@ -98,14 +119,14 @@ function parseDateToKey(raw: string) {
   return "";
 }
 
-function inRange(eventDate: string | undefined, range: string) {
+function inRange(eventDate: string | undefined, range: string, timezone = "GMT+7") {
   if (!eventDate) return true;
-  const { from, to } = getDateWindow(range);
+  const { from, to } = getDateWindow(range, timezone);
   if (range === "today" || range === "tomorrow") return eventDate === from;
   return eventDate >= from && eventDate <= to;
 }
 
-function normalizeEvent(item: Record<string, unknown>): CalendarEvent {
+function normalizeEvent(item: Record<string, unknown>, timezone = "GMT+7"): CalendarEvent {
   const rawDate = pick(item, ["date", "datetime", "date_time", "timestamp", "event_time"], "");
   const parsedDate = parseDateToKey(rawDate);
   const timeFromDate = rawDate.includes("T") ? rawDate.slice(11, 16) : rawDate.length >= 16 ? rawDate.slice(11, 16) : "";
@@ -126,11 +147,12 @@ function normalizeEvent(item: Record<string, unknown>): CalendarEvent {
   };
 }
 
-function sampleEvents(): CalendarEvent[] {
+function sampleEvents(timezone = "GMT+7"): CalendarEvent[] {
+  const { from } = getDateWindow("today", timezone);
   return [
-    { date: dateKey(new Date()), datetime: "", time: "All Day", currency: "USD", impact: "high", event: "OPEC Meeting", actual: "-", forecast: "-", previous: "-", country: "US" },
-    { date: dateKey(new Date()), datetime: "", time: "19:30", currency: "USD", impact: "high", event: "Nonfarm Payrolls", actual: "-", forecast: "190K", previous: "175K", country: "United States" },
-    { date: dateKey(new Date()), datetime: "", time: "21:00", currency: "USD", impact: "medium", event: "ISM Services PMI", actual: "-", forecast: "52.6", previous: "53.8", country: "United States" },
+    { date: from, datetime: "", time: "All Day", currency: "USD", impact: "high", event: "OPEC Meeting", actual: "-", forecast: "-", previous: "-", country: "US" },
+    { date: from, datetime: "", time: "19:30", currency: "USD", impact: "high", event: "Nonfarm Payrolls", actual: "-", forecast: "190K", previous: "175K", country: "United States" },
+    { date: from, datetime: "", time: "21:00", currency: "USD", impact: "medium", event: "ISM Services PMI", actual: "-", forecast: "52.6", previous: "53.8", country: "United States" },
   ];
 }
 
@@ -147,7 +169,7 @@ function xmlText(block: string, tag: string) {
     .trim();
 }
 
-function parseForexFactoryXml(xml: string, range: string) {
+function parseForexFactoryXml(xml: string, range: string, timezone = "GMT+7") {
   const blocks = Array.from(xml.matchAll(/<event>([\s\S]*?)<\/event>/gi)).map((match) => match[1]);
   const rows = blocks.map((block) => {
     const title = xmlText(block, "title");
@@ -155,7 +177,8 @@ function parseForexFactoryXml(xml: string, range: string) {
     const rawDate = xmlText(block, "date");
     const date = parseDateToKey(rawDate);
     const time = xmlText(block, "time") || "All Day";
-    const impact = inferImpactFromEvent(title, normalizeImpact(xmlText(block, "impact")));
+    // Penting: untuk ForexFactory jangan di-upgrade pakai keyword. Pakai impact asli dari feed agar cocok dengan warna FF.
+    const impact = normalizeImpact(xmlText(block, "impact"));
 
     return {
       date,
@@ -171,10 +194,10 @@ function parseForexFactoryXml(xml: string, range: string) {
     } as CalendarEvent;
   });
 
-  return rows.filter((row) => inRange(row.date, range));
+  return rows.filter((row) => inRange(row.date, range, timezone));
 }
 
-async function fetchFromForexFactory(range: string) {
+async function fetchFromForexFactory(range: string, timezone = "GMT+7") {
   const response = await fetch("https://nfs.faireconomy.media/ff_calendar_thisweek.xml", {
     headers: {
       "Accept": "application/xml,text/xml,*/*",
@@ -183,13 +206,11 @@ async function fetchFromForexFactory(range: string) {
   });
   if (!response.ok) throw new Error(`ForexFactory feed returned HTTP ${response.status}`);
   const xml = await response.text();
-  const rows = parseForexFactoryXml(xml, range);
-  if (!rows.length) throw new Error("ForexFactory feed returned no events for selected range");
-  return rows;
+  return parseForexFactoryXml(xml, range, timezone);
 }
 
-async function fetchFromFmp(range: string, apiKey: string) {
-  const { from, to } = getDateWindow(range);
+async function fetchFromFmp(range: string, apiKey: string, timezone = "GMT+7") {
+  const { from, to } = getDateWindow(range, timezone);
   const url = new URL("https://financialmodelingprep.com/stable/economic-calendar");
   url.searchParams.set("from", from);
   url.searchParams.set("to", to);
@@ -200,7 +221,7 @@ async function fetchFromFmp(range: string, apiKey: string) {
   const payload = await response.json();
   const rows = extractRows(payload);
   if (!Array.isArray(rows)) throw new Error("FMP payload is not an array");
-  return rows.map((item) => normalizeEvent(item as Record<string, unknown>)).filter((row) => inRange(row.date, range));
+  return rows.map((item) => normalizeEvent(item as Record<string, unknown>, timezone)).filter((row) => inRange(row.date, range, timezone));
 }
 
 async function fetchFromGenericSource(sourceUrl: string, apiKey: string, range: string, timezone: string) {
@@ -220,7 +241,7 @@ async function fetchFromGenericSource(sourceUrl: string, apiKey: string, range: 
   const payload = await response.json();
   const rows = extractRows(payload);
   if (!Array.isArray(rows)) throw new Error("Source payload is not an array");
-  return rows.map((item) => normalizeEvent(item as Record<string, unknown>)).filter((row) => inRange(row.date, range));
+  return rows.map((item) => normalizeEvent(item as Record<string, unknown>, timezone)).filter((row) => inRange(row.date, range, timezone));
 }
 
 function extractRows(payload: unknown) {
@@ -235,7 +256,7 @@ Deno.serve(async (request) => {
   try {
     const url = new URL(request.url);
     const range = url.searchParams.get("range") || "today";
-    const timezone = url.searchParams.get("timezone") || "Asia/Jakarta";
+    const timezone = url.searchParams.get("timezone") || "GMT+7";
     const provider = (Deno.env.get("ECONOMIC_CALENDAR_PROVIDER") || "auto").toLowerCase();
     const sourceUrl = Deno.env.get("ECONOMIC_CALENDAR_SOURCE_URL") || "";
     const apiKey = Deno.env.get("ECONOMIC_CALENDAR_API_KEY") || "";
@@ -246,14 +267,14 @@ Deno.serve(async (request) => {
     const errors: string[] = [];
 
     const tryForexFactory = async () => {
-      events = await fetchFromForexFactory(range);
+      events = await fetchFromForexFactory(range, timezone);
       source = "ForexFactory / FairEconomy weekly calendar feed";
       mode = "live";
     };
 
     const tryFmp = async () => {
       if (!apiKey) throw new Error("FMP API key is missing");
-      events = await fetchFromFmp(range, apiKey);
+      events = await fetchFromFmp(range, apiKey, timezone);
       source = "Financial Modeling Prep economic calendar";
       mode = "live";
     };
@@ -267,26 +288,28 @@ Deno.serve(async (request) => {
       source = "Configured economic calendar source";
       mode = "live";
     } else {
-      try { await tryForexFactory(); } catch (error) { errors.push(`FF: ${error instanceof Error ? error.message : "failed"}`); }
-      if (!events.length) {
-        try { await tryFmp(); } catch (error) { errors.push(`FMP: ${error instanceof Error ? error.message : "failed"}`); }
-      }
-      if (!events.length && sourceUrl) {
-        try {
-          events = await fetchFromGenericSource(sourceUrl, apiKey, range, timezone);
-          source = "Configured economic calendar source";
-          mode = "live";
-        } catch (error) { errors.push(`Generic: ${error instanceof Error ? error.message : "failed"}`); }
+      try {
+        await tryForexFactory();
+      } catch (error) {
+        errors.push(`FF: ${error instanceof Error ? error.message : "failed"}`);
+        try { await tryFmp(); } catch (fmpError) { errors.push(`FMP: ${fmpError instanceof Error ? fmpError.message : "failed"}`); }
+        if (!events.length && sourceUrl) {
+          try {
+            events = await fetchFromGenericSource(sourceUrl, apiKey, range, timezone);
+            source = "Configured economic calendar source";
+            mode = "live";
+          } catch (genericError) { errors.push(`Generic: ${genericError instanceof Error ? genericError.message : "failed"}`); }
+        }
       }
     }
 
-    if (!events.length) {
-      events = sampleEvents().filter((row) => inRange(row.date, range));
+    if (!events.length && mode !== "live") {
+      events = sampleEvents(timezone).filter((row) => inRange(row.date, range, timezone));
       source = "Farmer Circle sample";
       mode = errors.length ? "fallback" : "sample";
     }
 
-    events.sort((a, b) => String(a.time).localeCompare(String(b.time)));
+    events.sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")) || String(a.time).localeCompare(String(b.time)));
 
     return json({
       source,
