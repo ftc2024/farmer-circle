@@ -41,6 +41,7 @@ function normalizeImpact(value) {
 
 function normalizeEvent(item) {
   return {
+    date: item.date || "",
     time: item.time || item.event_time || item.date_time?.slice(11, 16) || "--:--",
     currency: String(item.currency || item.country_code || item.currency_code || "USD").toUpperCase(),
     impact: normalizeImpact(item.impact || item.importance || item.volatility),
@@ -54,6 +55,7 @@ function normalizeEvent(item) {
 
 function getSessionFromTime(time) {
   const hour = Number(String(time).split(":")[0]);
+  if (Number.isNaN(hour)) return "all-day";
   if (hour >= 6 && hour < 14) return "asia";
   if (hour >= 14 && hour < 20) return "london";
   return "new-york";
@@ -72,7 +74,8 @@ function renderLiveCalendar() {
     const matchSearch = !search || `${item.event} ${item.currency} ${item.country}`.toLowerCase().includes(search);
     const matchCurrency = currency === "all" || item.currency === currency;
     const matchImpact = impact === "all" || item.impact === impact;
-    const matchSession = session === "all" || getSessionFromTime(item.time) === session;
+    const itemSession = getSessionFromTime(item.time);
+    const matchSession = session === "all" || itemSession === "all-day" || itemSession === session;
     return matchSearch && matchCurrency && matchImpact && matchSession;
   });
 
@@ -85,7 +88,7 @@ function renderLiveCalendar() {
     <span class="calendar-time">${item.time}</span>
     <span class="calendar-currency">${item.currency}</span>
     <span class="calendar-impact ${item.impact}">${item.impact}</span>
-    <span class="calendar-event"><strong>${item.event}</strong><small>${item.country}</small></span>
+    <span class="calendar-event"><strong>${item.event}</strong><small>${item.date ? `${item.date} · ` : ""}${item.country}</small></span>
     <span class="calendar-number">${item.actual}</span>
     <span class="calendar-number">${item.forecast}</span>
     <span class="calendar-number">${item.previous}</span>
@@ -110,10 +113,13 @@ async function fetchLiveCalendar() {
     const rows = Array.isArray(payload) ? payload : payload.events || payload.data || [];
     liveCalendarEvents = rows.map(normalizeEvent);
 
+    const updated = payload.updated_at ? new Date(payload.updated_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "baru saja";
     if (payload.mode === "live") {
-      liveStatus("Live Data", payload.source || "Economic calendar backend aktif.");
+      liveStatus("Live Data", `${payload.source || "Economic calendar backend aktif."} · Update ${updated}`);
+    } else if (payload.mode === "fallback") {
+      liveStatus("Fallback Data", `${payload.errors?.join(" | ") || "Source utama gagal."} · Update ${updated}`);
     } else {
-      liveStatus("Backend Sample", payload.error ? `Backend aktif, source error: ${payload.error}` : "Backend aktif, source belum dikonfigurasi.");
+      liveStatus("Backend Sample", payload.error ? `Backend aktif, source error: ${payload.error}` : "Backend aktif, source belum mengirim data live.");
     }
 
     renderLiveCalendar();
