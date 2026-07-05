@@ -7,262 +7,96 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./styles.css?v=20260705-ui-layer-1" />
+    <link rel="stylesheet" href="./styles.css?v=20260705-learning-1" />
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-    <script type="module" src="./app.js?v=20260705-ui-layer-1"></script>
-    <script type="module" src="./profile-fix.js?v=20260705-ui-layer-1"></script>
-    <script type="module" src="./avatar-fix.js?v=20260705-ui-layer-1"></script>
-    <script type="module" src="./trade-journal-upgrade.js?v=20260705-ui-layer-1"></script>
-    <script type="module" src="./ui-layer.js?v=20260705-ui-layer-1"></script>
-    <script type="module" src="./calendar-ui.js?v=20260705-ui-layer-1"></script>
-    <script type="module" src="./calendar-live.js?v=20260705-ui-layer-1"></script>
+    <script type="module" src="./app.js?v=20260705-learning-1"></script>
+    <script type="module" src="./profile-fix.js?v=20260705-learning-1"></script>
+    <script type="module" src="./avatar-fix.js?v=20260705-learning-1"></script>
+    <script type="module" src="./trade-journal-upgrade.js?v=20260705-learning-1"></script>
+    <script type="module" src="./calendar-ui.js?v=20260705-learning-1"></script>
+    <script type="module" src="./calendar-live.js?v=20260705-learning-1"></script>
   </head>
   <body>
     <div class="app-shell">
       <main id="auth-view" class="auth-layout">
         <section class="brand-panel" aria-label="Farmer Circle">
-          <div class="wordmark">
-            <div class="brand-mark">F</div>
-            <strong>Farmer <span>Circle</span></strong>
-          </div>
-
+          <div class="wordmark"><div class="brand-mark">F</div><strong>Farmer <span>Circle</span></strong></div>
           <div class="brand-story">
             <p class="eyebrow">FTC Jember · Trading Command Center</p>
             <h1>Sistem yang konsisten selalu menang lawan <span>feeling yang naik-turun.</span></h1>
-            <p class="lead">
-              Satu tempat buat jurnal trade, analisa intraday, dan review performa, biar keputusan lo based on data,
-              bukan mood hari ini.
-            </p>
-
+            <p class="lead">Satu tempat buat jurnal trade, analisa intraday, dan review performa, biar keputusan lo based on data, bukan mood hari ini.</p>
             <div class="market-frame" aria-hidden="true">
               <svg viewBox="0 0 540 220" preserveAspectRatio="none">
-                <line x1="0" x2="540" y1="40" y2="40" />
-                <line x1="0" x2="540" y1="82" y2="82" class="gold-line" />
-                <line x1="0" x2="540" y1="112" y2="112" class="purple-line" />
-                <line x1="0" x2="540" y1="145" y2="145" class="gold-line" />
-                <line x1="0" x2="540" y1="184" y2="184" />
-                <text x="505" y="36">0.0</text>
-                <text x="496" y="78">0.382</text>
-                <text x="496" y="108">0.618</text>
-                <text x="496" y="141">0.786</text>
-                <text x="505" y="180">1.0</text>
+                <line x1="0" x2="540" y1="40" y2="40" /><line x1="0" x2="540" y1="82" y2="82" class="gold-line" /><line x1="0" x2="540" y1="112" y2="112" class="purple-line" /><line x1="0" x2="540" y1="145" y2="145" class="gold-line" /><line x1="0" x2="540" y1="184" y2="184" />
+                <text x="505" y="36">0.0</text><text x="496" y="78">0.382</text><text x="496" y="108">0.618</text><text x="496" y="141">0.786</text><text x="505" y="180">1.0</text>
                 <polyline points="24,174 55,142 88,160 122,80 154,112 188,70 222,96 256,52 290,79 324,118 358,73 392,104 426,62 460,91 498,58" />
-                <g class="candles">
-                  <rect x="48" y="138" width="9" height="34" />
-                  <rect x="116" y="78" width="9" height="64" />
-                  <rect x="184" y="69" width="9" height="44" />
-                  <rect x="252" y="52" width="9" height="28" />
-                  <rect x="320" y="78" width="9" height="40" />
-                  <rect x="388" y="72" width="9" height="32" />
-                  <rect x="456" y="58" width="9" height="33" />
-                </g>
+                <g class="candles"><rect x="48" y="138" width="9" height="34" /><rect x="116" y="78" width="9" height="64" /><rect x="184" y="69" width="9" height="44" /><rect x="252" y="52" width="9" height="28" /><rect x="320" y="78" width="9" height="40" /><rect x="388" y="72" width="9" height="32" /><rect x="456" y="58" width="9" height="33" /></g>
               </svg>
             </div>
-
-            <div class="feature-pills" aria-label="Fitur Farmer Circle">
-              <span>Jurnal Trade</span>
-              <span>Analisa Intraday</span>
-              <span>Backtest & Performance</span>
-              <span>Daily Bias</span>
-            </div>
+            <div class="feature-pills" aria-label="Fitur Farmer Circle"><span>Jurnal Trade</span><span>Analisa Intraday</span><span>Backtest & Performance</span><span>Daily Bias</span></div>
           </div>
-
-          <footer class="brand-footer">
-            <span>© 2026 Farmer Trader Community</span>
-            <span>Jember · Lumajang · Probolinggo · Banyuwangi</span>
-          </footer>
+          <footer class="brand-footer"><span>© 2026 Farmer Trader Community</span><span>Jember · Lumajang · Probolinggo · Banyuwangi</span></footer>
         </section>
-
         <section class="login-panel" aria-label="Login">
-          <div class="login-switch" aria-hidden="true">
-            <span>Masuk</span>
-          </div>
-
-          <div class="panel-heading">
-            <h2>Selamat balik, Bro</h2>
-            <p>Masuk buat lanjutin sistem trading lo.</p>
-          </div>
-
+          <div class="login-switch" aria-hidden="true"><span>Masuk</span></div>
+          <div class="panel-heading"><h2>Selamat balik, Bro</h2><p>Masuk buat lanjutin sistem trading lo.</p></div>
           <form id="login-form" class="form-stack" novalidate>
-            <label>
-              <span>Email</span>
-              <input id="email" type="email" autocomplete="email" placeholder="nama@email.com" required />
-            </label>
-
-            <label>
-              <span>Password</span>
-              <div class="password-wrap">
-                <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" required minlength="6" />
-                <button class="show-password" id="toggle-password" type="button" aria-label="Tampilkan password">
-                  <span>SHOW</span>
-                </button>
-              </div>
-            </label>
-
-            <div class="login-options">
-              <label class="remember-option">
-                <input id="remember-me" type="checkbox" checked />
-                <span>Inget gua</span>
-              </label>
-              <button id="forgot-password" class="link-button" type="button">Lupa password?</button>
-            </div>
-
-            <p id="login-error" class="form-error" role="alert"></p>
-
-            <button id="login-button" class="primary-button" type="submit">
-              <span>Masuk</span>
-            </button>
+            <label><span>Email</span><input id="email" type="email" autocomplete="email" placeholder="nama@email.com" required /></label>
+            <label><span>Password</span><div class="password-wrap"><input id="password" type="password" autocomplete="current-password" placeholder="••••••••" required minlength="6" /><button class="show-password" id="toggle-password" type="button" aria-label="Tampilkan password"><span>SHOW</span></button></div></label>
+            <div class="login-options"><label class="remember-option"><input id="remember-me" type="checkbox" checked /><span>Inget gua</span></label><button id="forgot-password" class="link-button" type="button">Lupa password?</button></div>
+            <p id="login-error" class="form-error" role="alert"></p><button id="login-button" class="primary-button" type="submit"><span>Masuk</span></button>
           </form>
-
-          <div class="setup-note">
-            <p>Secure login by Supabase Auth. Tidak ada halaman daftar publik.</p>
-          </div>
+          <div class="setup-note"><p>Secure login by Supabase Auth. Tidak ada halaman daftar publik.</p></div>
         </section>
       </main>
-
       <main id="dashboard-view" class="dashboard-layout hidden">
         <aside class="sidebar">
-          <div class="brand-row">
-            <div class="brand-mark small">FC</div>
-            <div>
-              <strong>Farmer Circle</strong>
-              <span id="user-role">member</span>
-            </div>
-          </div>
-
+          <div class="brand-row"><div class="brand-mark small">FC</div><div><strong>Farmer Circle</strong><span id="user-role">member</span></div></div>
           <nav class="side-nav" aria-label="Dashboard">
-            <button class="nav-item active" type="button" data-section="performance-section">
-              <i data-lucide="chart-no-axes-combined"></i>
-              <span>Performance</span>
-            </button>
-            <button class="nav-item" type="button" data-section="journal-section">
-              <i data-lucide="notebook-pen"></i>
-              <span>Jurnal Trade</span>
-            </button>
-            <button class="nav-item" type="button" data-section="bias-section">
-              <i data-lucide="radar"></i>
-              <span>Daily Bias</span>
-            </button>
+            <button class="nav-item active" type="button" data-section="performance-section"><i data-lucide="chart-no-axes-combined"></i><span>Performance</span></button>
+            <button class="nav-item" type="button" data-section="journal-section"><i data-lucide="notebook-pen"></i><span>Jurnal Trade</span></button>
+            <button class="nav-item" type="button" data-section="bias-section"><i data-lucide="radar"></i><span>Daily Bias</span></button>
           </nav>
-
-          <button id="logout-button" class="ghost-button" type="button">
-            <i data-lucide="log-out"></i>
-            <span>Keluar</span>
-          </button>
+          <button id="logout-button" class="ghost-button" type="button"><i data-lucide="log-out"></i><span>Keluar</span></button>
         </aside>
-
         <section class="content-area">
-          <header class="topbar">
-            <div>
-              <p class="eyebrow">Dashboard</p>
-              <h2 id="welcome-title">Performance Dashboard</h2>
-            </div>
-            <div class="user-chip">
-              <i data-lucide="user-round"></i>
-              <span id="user-email">-</span>
-            </div>
-          </header>
-
+          <header class="topbar"><div><p class="eyebrow">Dashboard</p><h2 id="welcome-title">Performance Dashboard</h2></div><div class="user-chip"><i data-lucide="user-round"></i><span id="user-email">-</span></div></header>
           <section id="performance-section" class="workspace-section">
-            <div class="performance-header">
-              <div>
-                <p class="eyebrow small-eyebrow">Trading Analytics</p>
-                <h3>Ringkasan performa sistem lo</h3>
-                <p>Semua angka dihitung dari jurnal trade yang sudah punya hasil R.</p>
-              </div>
-              <button id="refresh-analytics" class="ghost-button compact" type="button">
-                <i data-lucide="refresh-cw"></i>
-                <span>Refresh</span>
-              </button>
-            </div>
-
-            <div class="filter-panel">
-              <label>
-                <span>Pair</span>
-                <select id="analytics-pair-filter">
-                  <option value="all">Semua pair</option>
-                </select>
-              </label>
-              <label>
-                <span>Setup</span>
-                <select id="analytics-setup-filter">
-                  <option value="all">Semua setup</option>
-                </select>
-              </label>
-              <label>
-                <span>Hasil</span>
-                <select id="analytics-result-filter">
-                  <option value="all">Semua hasil</option>
-                  <option value="win">Win only</option>
-                  <option value="loss">Loss only</option>
-                  <option value="breakeven">Breakeven</option>
-                  <option value="open">Belum close</option>
-                </select>
-              </label>
-            </div>
-
-            <div class="stats-grid">
-              <article class="stat-card">
-                <span>Total Trade</span>
-                <strong id="stat-total-trades">0</strong>
-                <small id="stat-closed-trades">0 closed</small>
-              </article>
-              <article class="stat-card">
-                <span>Win Rate</span>
-                <strong id="stat-win-rate">0%</strong>
-                <small id="stat-win-loss">0W / 0L</small>
-              </article>
-              <article class="stat-card accent">
-                <span>Net Result</span>
-                <strong id="stat-net-r">0R</strong>
-                <small id="stat-avg-r">Avg 0R/trade</small>
-              </article>
-              <article class="stat-card">
-                <span>Profit Factor</span>
-                <strong id="stat-profit-factor">-</strong>
-                <small id="stat-best-worst">Best 0R · Worst 0R</small>
-              </article>
-            </div>
-
-            <div class="analytics-grid">
-              <article class="analytics-card large">
-                <div class="section-heading">
-                  <h3>Equity Curve</h3>
-                  <span class="mini-label">Cumulative R</span>
-                </div>
-                <div id="equity-chart" class="chart-box"></div>
-              </article>
-
-              <article class="analytics-card">
-                <div class="section-heading">
-                  <h3>Monthly Performance</h3>
-                  <span class="mini-label">Net R / bulan</span>
-                </div>
-                <div id="monthly-chart" class="bar-chart"></div>
-              </article>
-
-              <article class="analytics-card">
-                <div class="section-heading">
-                  <h3>Pair Breakdown</h3>
-                  <span class="mini-label">Top pair</span>
-                </div>
-                <div id="pair-breakdown" class="breakdown-list"></div>
-              </article>
-
-              <article class="analytics-card">
-                <div class="section-heading">
-                  <h3>Insight Cepat</h3>
-                  <span class="mini-label">Auto read</span>
-                </div>
-                <div id="quick-insights" class="insight-list"></div>
-              </article>
+            <div class="performance-header"><div><p class="eyebrow small-eyebrow">Trading Analytics</p><h3>Ringkasan performa sistem lo</h3><p>Semua angka dihitung dari jurnal trade yang sudah punya hasil R.</p></div><button id="refresh-analytics" class="ghost-button compact" type="button"><i data-lucide="refresh-cw"></i><span>Refresh</span></button></div>
+            <div class="filter-panel"><label><span>Pair</span><select id="analytics-pair-filter"><option value="all">Semua pair</option></select></label><label><span>Setup</span><select id="analytics-setup-filter"><option value="all">Semua setup</option></select></label><label><span>Hasil</span><select id="analytics-result-filter"><option value="all">Semua hasil</option><option value="win">Win only</option><option value="loss">Loss only</option><option value="breakeven">Breakeven</option><option value="open">Belum close</option></select></label></div>
+            <div class="stats-grid"><article class="stat-card"><span>Total Trade</span><strong id="stat-total-trades">0</strong><small id="stat-closed-trades">0 closed</small></article><article class="stat-card"><span>Win Rate</span><strong id="stat-win-rate">0%</strong><small id="stat-win-loss">0W / 0L</small></article><article class="stat-card accent"><span>Net Result</span><strong id="stat-net-r">0R</strong><small id="stat-avg-r">Avg 0R/trade</small></article><article class="stat-card"><span>Profit Factor</span><strong id="stat-profit-factor">-</strong><small id="stat-best-worst">Best 0R · Worst 0R</small></article></div>
+            <div class="analytics-grid"><article class="analytics-card large"><div class="section-heading"><h3>Equity Curve</h3><span class="mini-label">Cumulative R</span></div><div id="equity-chart" class="chart-box"></div></article><article class="analytics-card"><div class="section-heading"><h3>Monthly Performance</h3><span class="mini-label">Net R / bulan</span></div><div id="monthly-chart" class="bar-chart"></div></article><article class="analytics-card"><div class="section-heading"><h3>Pair Breakdown</h3><span class="mini-label">Top pair</span></div><div id="pair-breakdown" class="breakdown-list"></div></article><article class="analytics-card"><div class="section-heading"><h3>Insight Cepat</h3><span class="mini-label">Auto read</span></div><div id="quick-insights" class="insight-list"></div></article></div>
+          </section>
+          <section id="journal-section" class="workspace-section hidden"></section>
+          <section id="bias-section" class="workspace-section hidden">
+            <div class="split-layout">
+              <form id="bias-form" class="editor-panel hidden" novalidate>
+                <input id="bias-id" type="hidden" />
+                <div class="section-heading"><h3 id="bias-form-title">Upload Daily Bias</h3><button id="cancel-edit-bias" class="icon-button hidden" type="button" aria-label="Batalkan edit"><i data-lucide="x"></i></button></div>
+                <label><span>Judul</span><input id="bias-title" type="text" placeholder="Bias sesi London" required maxlength="120" /></label>
+                <div class="grid-2"><label><span>Market</span><input id="bias-market" type="text" placeholder="XAUUSD / BTC / EURUSD" required maxlength="40" /></label><label><span>Arah Bias</span><select id="bias-direction" required><option value="bullish">Bullish</option><option value="bearish">Bearish</option><option value="neutral">Neutral</option></select></label></div>
+                <label><span>Konten</span><textarea id="bias-content" rows="8" placeholder="Area penting, invalidation, skenario entry" required></textarea></label>
+                <p id="bias-error" class="form-error" role="alert"></p><button id="save-bias-button" class="primary-button" type="submit"><i data-lucide="upload-cloud"></i><span>Publish Daily Bias</span></button>
+              </form>
+              <div class="list-panel wide"><div class="section-heading"><h3>Daily Bias Terbaru</h3><button id="refresh-biases" class="icon-button" type="button" aria-label="Refresh daily bias"><i data-lucide="refresh-cw"></i></button></div><div id="bias-list" class="item-list"></div></div>
             </div>
           </section>
-
-          <section id="journal-section" class="workspace-section hidden"></section>
-          <section id="bias-section" class="workspace-section hidden"></section>
         </section>
       </main>
     </div>
+    <script>
+      (function(){
+        const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+        const cats=['Candlestick Pattern|2|1|active|technical','Support and Resistance|1|0|active|technical','Fundamental|8|7|active|fundamental','Trading Psychology|7|0|active|psychology','Fundamental Intermarket|1|1|locked|fundamental','Struktur Market|1|1|locked|technical','Chart Pattern All|4|0|active|technical','Price Action|1|1|locked|technical'].map((x,i)=>{const p=x.split('|');return{n:i+1,t:p[0],m:p[1],l:p[2],s:p[3],c:p[4]}});
+        function css(){if($('#learning-inline-css'))return;let st=document.createElement('style');st.id='learning-inline-css';st.textContent='.learn-wrap{display:grid;gap:22px}.learn-hero,.learn-card{border:1px solid var(--line);border-radius:16px;background:rgba(16,22,42,.74);box-shadow:var(--shadow)}.learn-hero{padding:22px;background:linear-gradient(135deg,rgba(117,92,246,.14),rgba(37,212,206,.08))}.learn-hero p{color:var(--muted);line-height:1.65}.learn-controls{display:grid;grid-template-columns:minmax(240px,380px) 1fr;gap:18px;align-items:end}.learn-count{color:var(--cyan);font-family:JetBrains Mono,monospace;font-size:.78rem;font-weight:900;text-transform:uppercase;letter-spacing:.12em}.learn-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:22px}.learn-card{min-height:390px;overflow:hidden}.learn-img{height:175px;position:relative;display:grid;place-items:center;background:radial-gradient(circle at 25% 35%,rgba(198,255,0,.32),transparent 34%),linear-gradient(135deg,#07100b,#10162a,#050712)}.learn-img.locked{filter:grayscale(1);opacity:.78}.learn-rank,.learn-status{position:absolute;top:16px;padding:4px 9px;background:#07101a;border:1px solid rgba(198,255,0,.25);font-family:JetBrains Mono,monospace;font-size:.68rem;font-weight:1000}.learn-rank{left:16px;color:#c6ff00}.learn-status{left:58px;color:#fff}.learn-title{padding:0 18px;text-align:center;font-weight:1000;text-transform:uppercase;font-size:1.22rem;text-shadow:0 10px 24px #000}.learn-lock{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.48);color:#c6ff00}.learn-body{display:flex;min-height:215px;flex-direction:column;padding:20px 24px}.learn-meta{color:var(--muted);font-family:JetBrains Mono,monospace;font-size:.68rem;font-weight:900;text-transform:uppercase}.learn-meta b{color:#c6ff00}.learn-body h4{text-transform:uppercase}.learn-body p{color:var(--muted);line-height:1.6;font-size:.86rem}.learn-stars{margin-top:auto;padding-top:16px;border-top:1px solid var(--line);color:#c6ff00;letter-spacing:3px}.learn-action{text-align:right;color:#fff;font-size:.72rem;font-weight:1000;text-transform:uppercase}@media(max-width:1200px){.learn-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:850px){.learn-grid,.learn-controls{grid-template-columns:1fr 1fr}}@media(max-width:560px){.learn-grid,.learn-controls{grid-template-columns:1fr}}';document.head.appendChild(st)}
+        function nav(){const menu=$('.nav-dropdown-menu')||$('.side-nav');if(!menu||$('[data-section="learning-section"]'))return;const b=document.createElement('button');b.className='nav-item';b.type='button';b.dataset.section='learning-section';b.dataset.label='Materi & Video';b.dataset.icon='book-open-check';b.innerHTML='<i data-lucide="book-open-check"></i><span>Materi & Video</span>';const p=$('[data-section="profile-section"]',menu);p?menu.insertBefore(b,p):menu.appendChild(b)}
+        function section(){if($('#learning-section')||!$('.content-area'))return;$('.content-area').insertAdjacentHTML('beforeend','<section id="learning-section" class="workspace-section hidden"><div class="learn-wrap"><div class="learn-hero"><p class="eyebrow small-eyebrow">Learning Center</p><h3>Materi & Video Pembelajaran</h3><p>Layer khusus untuk PDF, video, dan modul belajar. Isi materi masih placeholder; nanti file Drive tinggal disambungkan per kategori.</p></div><div class="learn-controls"><label><span>Kategori</span><select id="learn-filter"><option value="all">Semua kategori</option><option value="technical">Technical</option><option value="fundamental">Fundamental</option><option value="psychology">Psychology</option><option value="locked">Locked</option></select></label><div class="learn-count"><span id="learn-count"></span> kategori tersedia</div></div><div id="learn-grid" class="learn-grid"></div></div></section>');$('#learn-filter').addEventListener('change',e=>render(e.target.value));render('all')}
+        function render(f){const rows=cats.filter(c=>f==='all'||c.c===f||c.s===f);$('#learn-count').textContent=rows.length;$('#learn-grid').innerHTML=rows.map(c=>'<article class="learn-card"><div class="learn-img '+(c.s==='locked'?'locked':'')+'"><span class="learn-rank">#'+c.n+'</span><span class="learn-status">'+(c.s==='locked'?'LOCKED':'ACTIVE')+'</span><div class="learn-title">'+c.t+'</div>'+(c.s==='locked'?'<div class="learn-lock"><i data-lucide="lock"></i></div>':'')+'</div><div class="learn-body"><div class="learn-meta">'+c.m+' Materi '+(c.l>0?' · <b>'+c.l+' Terkunci</b>':'')+' · Order #'+c.n+'</div><h4>'+c.t+'</h4><p>'+(c.s==='locked'?'Upgrade paket untuk membuka kategori materi ini.':'Materi PDF dan video akan disambungkan dari folder pembelajaran.')+'</p><div class="learn-stars">★★★★★</div><div class="learn-action">'+(c.s==='locked'?'Upgrade Paket':'Mulai Belajar')+' ›</div></div></article>').join('');window.lucide&&lucide.createIcons()}
+        function show(id){$$('.workspace-section').forEach(s=>s.classList.toggle('hidden',s.id!==id));$$('.nav-item').forEach(i=>i.classList.toggle('active',i.dataset.section===id));const a=$('[data-section="'+id+'"]'),label=a?.dataset.label||'Dashboard';if($('#welcome-title'))$('#welcome-title').textContent=id==='learning-section'?'Materi & Video':label;if($('#active-nav-label'))$('#active-nav-label').textContent=label;$('.compact-nav')?.classList.remove('open');window.lucide&&lucide.createIcons()}
+        function bind(){if(document.body.dataset.learnBind)return;document.body.dataset.learnBind='1';document.addEventListener('click',e=>{const b=e.target.closest('.nav-item[data-section]');if(!b||!$('#'+b.dataset.section))return;e.preventDefault();show(b.dataset.section)},true)}
+        function boot(){css();nav();section();bind();window.lucide&&lucide.createIcons()}
+        window.addEventListener('DOMContentLoaded',boot);setTimeout(boot,700);setTimeout(boot,1500);
+      })();
+    </script>
   </body>
 </html>
