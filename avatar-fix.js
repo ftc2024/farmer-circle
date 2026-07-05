@@ -176,6 +176,66 @@ async function uploadAvatar(event) {
   }
 }
 
+function clearSupabaseAuthStorage() {
+  const shouldRemove = (key) => key.startsWith("sb-") || key.includes("supabase.auth.token");
+
+  try {
+    Object.keys(localStorage).forEach((key) => {
+      if (shouldRemove(key)) localStorage.removeItem(key);
+    });
+  } catch (error) {
+    console.warn("Local storage cleanup skipped:", error.message);
+  }
+
+  try {
+    Object.keys(sessionStorage).forEach((key) => {
+      if (shouldRemove(key)) sessionStorage.removeItem(key);
+    });
+  } catch (error) {
+    console.warn("Session storage cleanup skipped:", error.message);
+  }
+}
+
+function forceShowLogin() {
+  $("#dashboard-view")?.classList.add("hidden");
+  $("#auth-view")?.classList.remove("hidden");
+  setText("#profile-message", "");
+  setText("#profile-error", "");
+  setText("#login-error", "");
+
+  const loginButton = $("#login-button");
+  if (loginButton) loginButton.disabled = false;
+
+  const logoutButton = $("#logout-button");
+  const logoutText = logoutButton?.querySelector("span");
+  if (logoutButton) logoutButton.disabled = false;
+  if (logoutText) logoutText.textContent = "Keluar";
+}
+
+async function forceLogout(event) {
+  const button = event.target?.closest?.("#logout-button");
+  if (!button) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+
+  const buttonText = button.querySelector("span");
+  button.disabled = true;
+  if (buttonText) buttonText.textContent = "Keluar...";
+
+  try {
+    const client = await createSupabaseFromAppConfig();
+    await client.auth.signOut();
+  } catch (error) {
+    console.warn("Logout via Supabase skipped, using local fallback:", error.message);
+  } finally {
+    clearSupabaseAuthStorage();
+    forceShowLogin();
+  }
+}
+
 document.addEventListener("change", uploadAvatar, true);
+document.addEventListener("click", forceLogout, true);
 window.addEventListener("DOMContentLoaded", () => setTimeout(syncAvatarFromProfile, 900));
 window.addEventListener("focus", () => syncAvatarFromProfile());
