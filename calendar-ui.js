@@ -24,7 +24,7 @@ function injectCalendarUI() {
             <div>
               <p class="eyebrow small-eyebrow">Market News</p>
               <h3>Economic Calendar</h3>
-              <p>Kalender ekonomi versi Farmer Circle. Bisa multi-filter currency dan impact, plus timezone member.</p>
+              <p>Kalender ekonomi versi Farmer Circle. Bisa multi-filter currency dan impact, plus timezone dan custom tanggal.</p>
             </div>
             <div class="calendar-source-card">
               <span>DATA MODE</span>
@@ -102,10 +102,28 @@ function injectCalendarUI() {
               <button class="calendar-range active" type="button" data-range="today">Today</button>
               <button class="calendar-range" type="button" data-range="tomorrow">Tomorrow</button>
               <button class="calendar-range" type="button" data-range="week">This Week</button>
+              <button class="calendar-range" type="button" data-range="past-month">Last 30D</button>
+              <button class="calendar-range" type="button" data-range="next-month">Next 30D</button>
+              <button class="calendar-range" type="button" data-range="custom">Custom</button>
             </div>
             <button id="calendar-refresh" class="ghost-button compact" type="button">
               <i data-lucide="refresh-cw"></i>
               <span>Refresh</span>
+            </button>
+          </div>
+
+          <div class="calendar-custom-range" id="calendar-custom-range">
+            <label>
+              <span>Dari Tanggal</span>
+              <input id="calendar-from-date" type="date" />
+            </label>
+            <label>
+              <span>Sampai Tanggal</span>
+              <input id="calendar-to-date" type="date" />
+            </label>
+            <button id="calendar-apply-custom" class="ghost-button compact" type="button">
+              <i data-lucide="search"></i>
+              <span>Tampilkan Custom</span>
             </button>
           </div>
 
@@ -141,16 +159,16 @@ function addCalendarStyles() {
     }
     @media (max-width: 780px) { .nav-dropdown-toggle { display: grid !important; } .nav-dropdown-menu { position: absolute !important; } }
     .calendar-shell { display: grid; gap: 16px; }
-    .calendar-hero, .calendar-filters, .calendar-toolbar, .calendar-table-card { border: 1px solid var(--line); border-radius: 14px; background: rgba(16,22,42,.72); box-shadow: var(--shadow); }
+    .calendar-hero, .calendar-filters, .calendar-toolbar, .calendar-custom-range, .calendar-table-card { border: 1px solid var(--line); border-radius: 14px; background: rgba(16,22,42,.72); box-shadow: var(--shadow); }
     .calendar-hero { display: flex; justify-content: space-between; gap: 20px; padding: 20px; background: linear-gradient(115deg, rgba(16,22,42,.92), rgba(12,55,70,.72)); }
     .calendar-hero p:last-child { margin: 8px 0 0; color: var(--muted); line-height: 1.6; }
     .calendar-source-card { min-width: 250px; padding: 14px; border: 1px solid rgba(37,212,206,.2); border-radius: 12px; background: rgba(5,8,18,.42); display: grid; gap: 5px; }
-    .calendar-source-card span, .calendar-table-head, .calendar-impact, .calendar-range, .calendar-filter-block > span, .calendar-search-field > span, .calendar-date-divider { font-family: "JetBrains Mono", monospace; text-transform: uppercase; letter-spacing: .1em; }
+    .calendar-source-card span, .calendar-table-head, .calendar-impact, .calendar-range, .calendar-filter-block > span, .calendar-search-field > span, .calendar-custom-range span, .calendar-date-divider { font-family: "JetBrains Mono", monospace; text-transform: uppercase; letter-spacing: .1em; }
     .calendar-source-card span { color: var(--cyan); font-size: .66rem; font-weight: 900; }
     .calendar-source-card small { color: var(--muted); line-height: 1.45; }
     .calendar-filters { display: grid; grid-template-columns: minmax(220px,1.35fr) repeat(4,minmax(150px,.75fr)); gap: 14px; padding: 16px; }
     .calendar-filter-block, .calendar-search-field { display: grid; gap: 8px; min-width: 0; position: relative; }
-    .calendar-filter-block > span, .calendar-search-field > span { color: #9fb0e0; font-size: .68rem; font-weight: 900; }
+    .calendar-filter-block > span, .calendar-search-field > span, .calendar-custom-range span { color: #9fb0e0; font-size: .68rem; font-weight: 900; }
     .calendar-multi-trigger { width: 100%; min-height: 43px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 10px; color: var(--text); background: #10162a; font-weight: 900; }
     .calendar-multi-trigger:hover, .calendar-multi.open .calendar-multi-trigger { border-color: rgba(37,212,206,.42); background: rgba(18,29,48,.9); }
     .calendar-multi-trigger strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .83rem; }
@@ -163,6 +181,9 @@ function addCalendarStyles() {
     .calendar-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
     .calendar-range { min-height: 36px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); background: rgba(255,255,255,.035); font-size: .68rem; font-weight: 900; }
     .calendar-range.active, .calendar-range:hover { color: var(--text); border-color: rgba(37,212,206,.35); background: rgba(37,212,206,.1); }
+    .calendar-custom-range { display: grid; grid-template-columns: minmax(170px,.5fr) minmax(170px,.5fr) auto; align-items: end; gap: 14px; padding: 14px 16px; }
+    .calendar-custom-range label { display: grid; gap: 8px; }
+    .calendar-custom-range.hidden { display: none !important; }
     .calendar-table-card { overflow: hidden; }
     .calendar-table-head, .calendar-row { display: grid; grid-template-columns: 90px 100px 120px minmax(240px,1fr) 100px 110px 110px; gap: 12px; align-items: center; }
     .calendar-table-head { padding: 13px 16px; color: var(--low); border-bottom: 1px solid var(--line); font-size: .66rem; font-weight: 900; }
@@ -180,9 +201,12 @@ function addCalendarStyles() {
     .calendar-event strong { display: block; margin-bottom: 4px; }
     .calendar-event small { color: var(--muted); }
     .calendar-number { color: var(--muted); font-weight: 800; }
-    @media (max-width: 1260px) { .calendar-filters { grid-template-columns: repeat(2,minmax(0,1fr)); } .calendar-search-field { grid-column: span 2; } }
+    .actual-value.actual-good { color: #25d4ce !important; text-shadow: 0 0 14px rgba(37,212,206,.25); }
+    .actual-value.actual-bad { color: #ff7070 !important; text-shadow: 0 0 14px rgba(255,112,112,.22); }
+    .actual-value.actual-neutral { color: var(--muted) !important; }
+    @media (max-width: 1260px) { .calendar-filters { grid-template-columns: repeat(2,minmax(0,1fr)); } .calendar-search-field { grid-column: span 2; } .calendar-custom-range { grid-template-columns: repeat(2,minmax(0,1fr)); } .calendar-custom-range button { grid-column: span 2; } }
     @media (max-width: 1100px) { .calendar-table-card { overflow-x: auto; } .calendar-table-head, .calendar-row { min-width: 1000px; } }
-    @media (max-width: 640px) { .calendar-hero, .calendar-toolbar { flex-direction: column; align-items: stretch; } .calendar-source-card { min-width: 0; } .calendar-filters { grid-template-columns: 1fr; } .calendar-search-field { grid-column: auto; } }
+    @media (max-width: 640px) { .calendar-hero, .calendar-toolbar { flex-direction: column; align-items: stretch; } .calendar-source-card { min-width: 0; } .calendar-filters, .calendar-custom-range { grid-template-columns: 1fr; } .calendar-search-field, .calendar-custom-range button { grid-column: auto; } }
   `;
   document.head.appendChild(style);
 }
