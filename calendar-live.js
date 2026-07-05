@@ -25,6 +25,12 @@ async function deriveCalendarApiUrl() {
   return liveCalendarApiUrl;
 }
 
+function escapeHTML(value) {
+  const div = document.createElement("div");
+  div.textContent = value ?? "";
+  return div.innerHTML;
+}
+
 function liveStatus(mode, note) {
   const modeEl = $live("#calendar-mode-label");
   const noteEl = $live("#calendar-source-note");
@@ -42,6 +48,7 @@ function normalizeImpact(value) {
 function normalizeEvent(item) {
   return {
     date: item.date || "",
+    datetime: item.datetime || item.datetime_utc || item.date_time || item.timestamp || "",
     time: item.time || item.event_time || item.date_time?.slice(11, 16) || "--:--",
     currency: String(item.currency || item.country_code || item.currency_code || "USD").toUpperCase(),
     impact: normalizeImpact(item.impact || item.importance || item.volatility),
@@ -53,28 +60,129 @@ function normalizeEvent(item) {
   };
 }
 
+function selectedValues(className) {
+  const checked = $$live(`.${className}:checked`).map((item) => item.value);
+  if (!checked.length || checked.includes("all")) return ["all"];
+  return checked;
+}
+
+function selectedTimezoneOffset() {
+  const value = $live("#calendar-timezone")?.value || "auto";
+  if (value === "auto") return -new Date().getTimezoneOffset() / 60;
+  return Number(value);
+}
+
+function timezoneLabel() {
+  const value = $live("#calendar-timezone")?.value || "auto";
+  const offset = selectedTimezoneOffset();
+  const sign = offset >= 0 ? "+" : "";
+  return value === "auto" ? `Local GMT${sign}${offset}` : `GMT${sign}${offset}`;
+}
+
+function pad2(value) {
+  return String(value).padStart(2, "0");
+}
+
+function parseAmPmTime(value) {
+  const text = String(value || "").trim();
+  const match = text.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i);
+  if (!match) return null;
+  let hour = Number(match[1]);
+  const minute = Number(match[2] || 0);
+  const period = match[3].toLowerCase();
+  if (period === "pm" && hour !== 12) hour += 12;
+  if (period === "am" && hour === 12) hour = 0;
+  return { hour, minute };
+}
+
+function parseHourMinute(value) {
+  const text = String(value || "").trim();
+  if (!text || /all\s*day/i.test(text)) return null;
+
+  const ampm = parseAmPmTime(text);
+  if (ampm) return ampm;
+
+  const match = text.match(/^(\d{1,2})[:.](\d{2})/);
+  if (!match) return null;
+  return { hour: Number(match[1]), minute: Number(match[2]) };
+}
+
+function parseDateTimeAsUTC(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+
+  if (/Z$|[+-]\d{2}:?\d{2}$/.test(text)) {
+    const direct = new Date(text);
+    return Number.isNaN(direct.getTime()) ? null : direct;
+  }
+
+  const normalized = text.includes("T") ? `${text}Z` : text.replace(" ", "T") + "Z";
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatEventTime(item) {
+  if (String(item.time || "").toLowerCase().includes("all")) return "All Day";
+
+  const offset = selectedTimezoneOffset();
+  const date = parseDateTimeAsUTC(item.datetime);
+  if (date) {
+    const shifted = new Date(date.getTime() + offset * 60 * 60 * 1000);
+    return `${pad2(shifted.getUTCHours())}:${pad2(shifted.getUTCMinutes())}`;
+  }
+
+  const parsed = parseHourMinute(item.time);
+  if (!parsed) return item.time || "--:--";
+  return `${pad2(parsed.hour)}:${pad2(parsed.minute)}`;
+}
+
+function displayEventDate(item) {
+  if (item.datetime) {
+    const offset = selectedTimezoneOffset();
+    const date = parseDateTimeAsUTC(item.datetime);
+    if (date) {
+      const shifted = new Date(date.getTime() + offset * 60 * 60 * 1000);
+      return shifted.toISOString().slice(0, 10);
+    }
+  }
+  return item.date || "";
+}
+
 function getSessionFromTime(time) {
-  const hour = Number(String(time).split(":")[0]);
-  if (Number.isNaN(hour)) return "all-day";
+  const parsed = parseHourMinute(time);
+  if (!parsed) return "all-day";
+  const hour = parsed.hour;
   if (hour >= 6 && hour < 14) return "asia";
   if (hour >= 14 && hour < 20) return "london";
   return "new-york";
+}
+
+function updateFilterSummaries() {
+  const currencies = selectedValues("calendar-currency-option");
+  const impacts = selectedValues("calendar-impact-option");
+  const currencySummary = $live("#calendar-currency-summary");
+  const impactSummary = $live("#calendar-impact-summary");
+  if (currencySummary) currencySummary.textContent = currencies.includes("all") ? "Semua currency" : currencies.join(", ");
+  if (impactSummary) impactSummary.textContent = impacts.includes("all") ? "Semua impact" : impacts.map((x) => x[0].toUpperCase() + x.slice(1)).join(", ");
 }
 
 function renderLiveCalendar() {
   const list = $live("#calendar-list");
   if (!list) return;
 
+  updateFilterSummaries();
+
   const search = $live("#calendar-search")?.value.trim().toLowerCase() || "";
-  const currency = $live("#calendar-currency")?.value || "all";
-  const impact = $live("#calendar-impact")?.value || "all";
+  const currencies = selectedValues("calendar-currency-option");
+  const impacts = selectedValues("calendar-impact-option");
   const session = $live("#calendar-session")?.value || "all";
 
   const filtered = liveCalendarEvents.filter((item) => {
+    const displayTime = formatEventTime(item);
     const matchSearch = !search || `${item.event} ${item.currency} ${item.country}`.toLowerCase().includes(search);
-    const matchCurrency = currency === "all" || item.currency === currency;
-    const matchImpact = impact === "all" || item.impact === impact;
-    const itemSession = getSessionFromTime(item.time);
+    const matchCurrency = currencies.includes("all") || currencies.includes(item.currency);
+    const matchImpact = impacts.includes("all") || impacts.includes(item.impact);
+    const itemSession = getSessionFromTime(displayTime);
     const matchSession = session === "all" || itemSession === "all-day" || itemSession === session;
     return matchSearch && matchCurrency && matchImpact && matchSession;
   });
@@ -84,15 +192,19 @@ function renderLiveCalendar() {
     return;
   }
 
-  list.innerHTML = filtered.map((item) => `<div class="calendar-row">
-    <span class="calendar-time">${item.time}</span>
-    <span class="calendar-currency">${item.currency}</span>
-    <span class="calendar-impact ${item.impact}">${item.impact}</span>
-    <span class="calendar-event"><strong>${item.event}</strong><small>${item.date ? `${item.date} · ` : ""}${item.country}</small></span>
-    <span class="calendar-number">${item.actual}</span>
-    <span class="calendar-number">${item.forecast}</span>
-    <span class="calendar-number">${item.previous}</span>
-  </div>`).join("");
+  list.innerHTML = filtered.map((item) => {
+    const displayTime = formatEventTime(item);
+    const displayDate = displayEventDate(item);
+    return `<div class="calendar-row">
+      <span class="calendar-time">${escapeHTML(displayTime)}</span>
+      <span class="calendar-currency">${escapeHTML(item.currency)}</span>
+      <span class="calendar-impact ${escapeHTML(item.impact)}">${escapeHTML(item.impact)}</span>
+      <span class="calendar-event"><strong>${escapeHTML(item.event)}</strong><small>${displayDate ? `${escapeHTML(displayDate)} · ` : ""}${escapeHTML(item.country)} · ${escapeHTML(timezoneLabel())}</small></span>
+      <span class="calendar-number">${escapeHTML(item.actual)}</span>
+      <span class="calendar-number">${escapeHTML(item.forecast)}</span>
+      <span class="calendar-number">${escapeHTML(item.previous)}</span>
+    </div>`;
+  }).join("");
 }
 
 async function fetchLiveCalendar() {
@@ -104,7 +216,7 @@ async function fetchLiveCalendar() {
     const apiUrl = await deriveCalendarApiUrl();
     const url = new URL(apiUrl);
     url.searchParams.set("range", liveCalendarRange);
-    url.searchParams.set("timezone", Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta");
+    url.searchParams.set("timezone", timezoneLabel());
 
     const response = await fetch(url.toString(), { cache: "no-store" });
     if (!response.ok) throw new Error(`Backend HTTP ${response.status}`);
@@ -113,13 +225,13 @@ async function fetchLiveCalendar() {
     const rows = Array.isArray(payload) ? payload : payload.events || payload.data || [];
     liveCalendarEvents = rows.map(normalizeEvent);
 
-    const updated = payload.updated_at ? new Date(payload.updated_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "baru saja";
+    const updated = payload.updated_at ? new Date(payload.updated_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short", hour12: false }) : "baru saja";
     if (payload.mode === "live") {
-      liveStatus("Live Data", `${payload.source || "Economic calendar backend aktif."} · Update ${updated}`);
+      liveStatus("Live Data", `${payload.source || "Economic calendar backend aktif."} · ${timezoneLabel()} · Update ${updated}`);
     } else if (payload.mode === "fallback") {
-      liveStatus("Fallback Data", `${payload.errors?.join(" | ") || "Source utama gagal."} · Update ${updated}`);
+      liveStatus("Fallback Data", `${payload.errors?.join(" | ") || "Source utama gagal."} · ${timezoneLabel()} · Update ${updated}`);
     } else {
-      liveStatus("Backend Sample", payload.error ? `Backend aktif, source error: ${payload.error}` : "Backend aktif, source belum mengirim data live.");
+      liveStatus("Backend Sample", payload.error ? `Backend aktif, source error: ${payload.error}` : `Backend aktif, source belum mengirim data live. · ${timezoneLabel()}`);
     }
 
     renderLiveCalendar();
@@ -128,7 +240,33 @@ async function fetchLiveCalendar() {
   }
 }
 
+function syncAllCheckboxGroup(changed, groupClass) {
+  const allBox = $live(`.${groupClass}[value="all"]`);
+  const boxes = $$live(`.${groupClass}`).filter((box) => box.value !== "all");
+
+  if (changed.value === "all") {
+    boxes.forEach((box) => { box.checked = false; });
+    allBox.checked = true;
+    return;
+  }
+
+  if (changed.checked) allBox.checked = false;
+  if (!boxes.some((box) => box.checked)) allBox.checked = true;
+}
+
 function bindLiveCalendar() {
+  document.addEventListener("change", (event) => {
+    if (event.target.matches(".calendar-currency-option")) {
+      syncAllCheckboxGroup(event.target, "calendar-currency-option");
+      renderLiveCalendar();
+    }
+    if (event.target.matches(".calendar-impact-option")) {
+      syncAllCheckboxGroup(event.target, "calendar-impact-option");
+      renderLiveCalendar();
+    }
+    if (event.target.matches("#calendar-timezone")) renderLiveCalendar();
+  }, true);
+
   document.addEventListener("click", async (event) => {
     const range = event.target.closest(".calendar-range");
     if (!range) return;
@@ -144,7 +282,7 @@ function bindLiveCalendar() {
     }
   }, true);
 
-  ["#calendar-search", "#calendar-currency", "#calendar-impact", "#calendar-session"].forEach((selector) => {
+  ["#calendar-search", "#calendar-session"].forEach((selector) => {
     document.addEventListener("input", (event) => {
       if (event.target.matches(selector)) renderLiveCalendar();
     }, true);
