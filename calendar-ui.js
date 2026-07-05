@@ -145,7 +145,7 @@ function addCalendarStyles() {
     .calendar-hero { display: flex; justify-content: space-between; gap: 20px; padding: 20px; background: linear-gradient(115deg, rgba(16,22,42,.92), rgba(12,55,70,.72)); }
     .calendar-hero p:last-child { margin: 8px 0 0; color: var(--muted); line-height: 1.6; }
     .calendar-source-card { min-width: 250px; padding: 14px; border: 1px solid rgba(37,212,206,.2); border-radius: 12px; background: rgba(5,8,18,.42); display: grid; gap: 5px; }
-    .calendar-source-card span, .calendar-table-head, .calendar-impact, .calendar-range, .calendar-filter-block > span, .calendar-search-field > span { font-family: "JetBrains Mono", monospace; text-transform: uppercase; letter-spacing: .1em; }
+    .calendar-source-card span, .calendar-table-head, .calendar-impact, .calendar-range, .calendar-filter-block > span, .calendar-search-field > span, .calendar-date-divider { font-family: "JetBrains Mono", monospace; text-transform: uppercase; letter-spacing: .1em; }
     .calendar-source-card span { color: var(--cyan); font-size: .66rem; font-weight: 900; }
     .calendar-source-card small { color: var(--muted); line-height: 1.45; }
     .calendar-filters { display: grid; grid-template-columns: minmax(220px,1.35fr) repeat(4,minmax(150px,.75fr)); gap: 14px; padding: 16px; }
@@ -167,6 +167,8 @@ function addCalendarStyles() {
     .calendar-table-head, .calendar-row { display: grid; grid-template-columns: 90px 100px 120px minmax(240px,1fr) 100px 110px 110px; gap: 12px; align-items: center; }
     .calendar-table-head { padding: 13px 16px; color: var(--low); border-bottom: 1px solid var(--line); font-size: .66rem; font-weight: 900; }
     .calendar-list { display: grid; }
+    .calendar-date-divider { display: flex; align-items: center; gap: 12px; min-height: 42px; padding: 12px 16px; color: var(--cyan); background: linear-gradient(90deg, rgba(37,212,206,.12), rgba(117,92,246,.08)); border-top: 1px solid rgba(37,212,206,.16); border-bottom: 1px solid rgba(37,212,206,.12); font-size: .7rem; font-weight: 900; }
+    .calendar-date-divider::before { content: ""; width: 22px; height: 1px; background: var(--cyan); box-shadow: 0 0 12px rgba(37,212,206,.6); }
     .calendar-row { min-height: 58px; padding: 13px 16px; border-bottom: 1px solid rgba(150,165,210,.09); }
     .calendar-row:last-child { border-bottom: 0; }
     .calendar-time { color: var(--text); font-weight: 900; }
