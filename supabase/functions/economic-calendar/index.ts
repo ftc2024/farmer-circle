@@ -13,6 +13,7 @@ const corsHeaders = {
 
 type CalendarEvent = {
   date?: string;
+  datetime?: string;
   time: string;
   currency: string;
   impact: "low" | "medium" | "high";
@@ -113,6 +114,7 @@ function normalizeEvent(item: Record<string, unknown>): CalendarEvent {
 
   return {
     date: parsedDate,
+    datetime: rawDate,
     time: pick(item, ["time", "event_time", "hour"], timeFromDate || "--:--"),
     currency: pick(item, ["currency", "currency_code", "country_code", "country"], "USD").toUpperCase(),
     impact,
@@ -126,9 +128,9 @@ function normalizeEvent(item: Record<string, unknown>): CalendarEvent {
 
 function sampleEvents(): CalendarEvent[] {
   return [
-    { date: dateKey(new Date()), time: "All Day", currency: "USD", impact: "high", event: "OPEC Meeting", actual: "-", forecast: "-", previous: "-", country: "US" },
-    { date: dateKey(new Date()), time: "19:30", currency: "USD", impact: "high", event: "Nonfarm Payrolls", actual: "-", forecast: "190K", previous: "175K", country: "United States" },
-    { date: dateKey(new Date()), time: "21:00", currency: "USD", impact: "medium", event: "ISM Services PMI", actual: "-", forecast: "52.6", previous: "53.8", country: "United States" },
+    { date: dateKey(new Date()), datetime: "", time: "All Day", currency: "USD", impact: "high", event: "OPEC Meeting", actual: "-", forecast: "-", previous: "-", country: "US" },
+    { date: dateKey(new Date()), datetime: "", time: "19:30", currency: "USD", impact: "high", event: "Nonfarm Payrolls", actual: "-", forecast: "190K", previous: "175K", country: "United States" },
+    { date: dateKey(new Date()), datetime: "", time: "21:00", currency: "USD", impact: "medium", event: "ISM Services PMI", actual: "-", forecast: "52.6", previous: "53.8", country: "United States" },
   ];
 }
 
@@ -150,12 +152,14 @@ function parseForexFactoryXml(xml: string, range: string) {
   const rows = blocks.map((block) => {
     const title = xmlText(block, "title");
     const country = xmlText(block, "country");
-    const date = parseDateToKey(xmlText(block, "date"));
+    const rawDate = xmlText(block, "date");
+    const date = parseDateToKey(rawDate);
     const time = xmlText(block, "time") || "All Day";
     const impact = inferImpactFromEvent(title, normalizeImpact(xmlText(block, "impact")));
 
     return {
       date,
+      datetime: "",
       time,
       currency: country || "USD",
       impact,
