@@ -45,6 +45,33 @@ function normalizeImpact(value) {
   return "low";
 }
 
+function parseActualNumber(value) {
+  const text = String(value || "").trim().replace(/,/g, "");
+  if (!text || text === "-" || /^n\/?a$/i.test(text)) return null;
+  const match = text.match(/-?\d+(\.\d+)?/);
+  if (!match) return null;
+  let number = Number(match[0]);
+  const lower = text.toLowerCase();
+  if (lower.includes("k")) number *= 1000;
+  if (lower.includes("m")) number *= 1000000;
+  if (lower.includes("b")) number *= 1000000000;
+  return Number.isFinite(number) ? number : null;
+}
+
+function lowerIsBetter(eventName) {
+  const text = String(eventName || "").toLowerCase();
+  return ["unemployment", "jobless", "claims", "claimant", "layoffs", "crude oil inventories", "inventories"].some((word) => text.includes(word));
+}
+
+function computeActualStatus(item) {
+  if (item.actual_status) return item.actual_status;
+  const actual = parseActualNumber(item.actual);
+  const forecast = parseActualNumber(item.forecast);
+  if (actual === null || forecast === null || actual === forecast) return "neutral";
+  const good = lowerIsBetter(item.event) ? actual < forecast : actual > forecast;
+  return good ? "good" : "bad";
+}
+
 function normalizeEvent(item) {
   return {
     date: item.date || "",
@@ -57,6 +84,7 @@ function normalizeEvent(item) {
     forecast: item.forecast ?? item.forecast_value ?? item.estimate ?? "-",
     previous: item.previous ?? item.previous_value ?? item.prev ?? "-",
     country: item.country || item.zone || item.region || "Global",
+    actual_status: item.actual_status || item.actualStatus || "neutral",
   };
 }
 
@@ -103,6 +131,10 @@ function addDays(date, days) {
   return next;
 }
 
+function dateKey(date) {
+  return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(date.getUTCDate())}`;
+}
+
 function shortDate(date) {
   return `${date.getUTCDate()} ${monthLabel(date.getUTCMonth())}`;
 }
@@ -120,16 +152,57 @@ function weekWindow() {
   return { monday, saturday };
 }
 
+function rangeWindow(range = liveCalendarRange) {
+  const today = localTodayDate();
+  if (range === "today") return { from: today, to: today };
+  if (range === "tomorrow") {
+    const tomorrow = addDays(today, 1);
+    return { from: tomorrow, to: tomorrow };
+  }
+  if (range === "week") return weekWindow();
+  if (range === "past-month") return { from: addDays(today, -30), to: today };
+  if (range === "next-month") return { from: today, to: addDays(today, 30) };
+  const fromValue = $live("#calendar-from-date")?.value;
+  const toValue = $live("#calendar-to-date")?.value;
+  return {
+    from: fromValue ? new Date(`${fromValue}T00:00:00Z`) : addDays(today, -30),
+    to: toValue ? new Date(`${toValue}T00:00:00Z`) : addDays(today, 30),
+  };
+}
+
 function updateRangeLabels() {
   const today = localTodayDate();
   const tomorrow = addDays(today, 1);
   const { monday, saturday } = weekWindow();
+  const past = rangeWindow("past-month");
+  const next = rangeWindow("next-month");
   const todayButton = $live(".calendar-range[data-range='today']");
   const tomorrowButton = $live(".calendar-range[data-range='tomorrow']");
   const weekButton = $live(".calendar-range[data-range='week']");
+  const pastButton = $live(".calendar-range[data-range='past-month']");
+  const nextButton = $live(".calendar-range[data-range='next-month']");
+  const customButton = $live(".calendar-range[data-range='custom']");
   if (todayButton) todayButton.textContent = `Today · ${shortDate(today)}`;
   if (tomorrowButton) tomorrowButton.textContent = `Tomorrow · ${shortDate(tomorrow)}`;
   if (weekButton) weekButton.textContent = `This Week · ${shortDate(monday)}–${shortDate(saturday)}`;
+  if (pastButton) pastButton.textContent = `Last 30D · ${shortDate(past.from)}–${shortDate(past.to)}`;
+  if (nextButton) nextButton.textContent = `Next 30D · ${shortDate(next.from)}–${shortDate(next.to)}`;
+  if (customButton) customButton.textContent = "Custom Date";
+}
+
+function setDefaultCustomDates() {
+  const from = $live("#calendar-from-date");
+  const to = $live("#calendar-to-date");
+  if (!from || !to) return;
+  const today = localTodayDate();
+  if (!from.value) from.value = dateKey(addDays(today, -30));
+  if (!to.value) to.value = dateKey(addDays(today, 30));
+}
+
+function toggleCustomRange() {
+  const box = $live("#calendar-custom-range");
+  if (!box) return;
+  box.classList.toggle("hidden", liveCalendarRange !== "custom");
 }
 
 function parseAmPmTime(value) {
@@ -216,22 +289,29 @@ function updateFilterSummaries() {
   if (impactSummary) impactSummary.textContent = impacts.includes("all") ? "Semua impact" : impacts.map((x) => x[0].toUpperCase() + x.slice(1)).join(", ");
 }
 
-function dateHeading(dateKey) {
-  if (!dateKey) return "Tanpa tanggal";
-  const date = new Date(`${dateKey}T00:00:00Z`);
-  if (Number.isNaN(date.getTime())) return dateKey;
+function dateHeading(dateKeyValue) {
+  if (!dateKeyValue) return "Tanpa tanggal";
+  const date = new Date(`${dateKeyValue}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return dateKeyValue;
   return longDate(date);
+}
+
+function actualTitle(item, status) {
+  if (status === "good") return `Good for ${item.currency}`;
+  if (status === "bad") return `Bad for ${item.currency}`;
+  return "Belum ada actual / netral";
 }
 
 function calendarRow(item) {
   const displayTime = formatEventTime(item);
   const displayDate = displayEventDate(item);
+  const status = computeActualStatus(item);
   return `<div class="calendar-row">
     <span class="calendar-time">${escapeHTML(displayTime)}</span>
     <span class="calendar-currency">${escapeHTML(item.currency)}</span>
     <span class="calendar-impact ${escapeHTML(item.impact)}">${escapeHTML(item.impact)}</span>
     <span class="calendar-event"><strong>${escapeHTML(item.event)}</strong><small>${displayDate ? `${escapeHTML(displayDate)} · ` : ""}${escapeHTML(item.country)} · ${escapeHTML(timezoneLabel())}</small></span>
-    <span class="calendar-number">${escapeHTML(item.actual)}</span>
+    <span class="calendar-number actual-value actual-${escapeHTML(status)}" title="${escapeHTML(actualTitle(item, status))}">${escapeHTML(item.actual)}</span>
     <span class="calendar-number">${escapeHTML(item.forecast)}</span>
     <span class="calendar-number">${escapeHTML(item.previous)}</span>
   </div>`;
@@ -242,6 +322,7 @@ function renderLiveCalendar() {
   if (!list) return;
 
   updateRangeLabels();
+  toggleCustomRange();
   updateFilterSummaries();
 
   const search = $live("#calendar-search")?.value.trim().toLowerCase() || "";
@@ -270,7 +351,8 @@ function renderLiveCalendar() {
     return;
   }
 
-  if (liveCalendarRange === "week") {
+  const groupedRanges = ["week", "past-month", "next-month", "custom"];
+  if (groupedRanges.includes(liveCalendarRange)) {
     let currentDate = "";
     list.innerHTML = filtered.map((item) => {
       const itemDate = displayEventDate(item);
@@ -286,15 +368,20 @@ function renderLiveCalendar() {
 
 async function fetchLiveCalendar() {
   try {
+    setDefaultCustomDates();
     updateRangeLabels();
+    toggleCustomRange();
     const list = $live("#calendar-list");
     if (list) list.innerHTML = `<div class="empty-state">Mengambil live economic calendar...</div>`;
     liveStatus("Loading Live Data", "Menghubungkan ke Farmer Circle backend...");
 
     const apiUrl = await deriveCalendarApiUrl();
     const url = new URL(apiUrl);
+    const range = rangeWindow(liveCalendarRange);
     url.searchParams.set("range", liveCalendarRange);
     url.searchParams.set("timezone", timezoneLabel());
+    url.searchParams.set("from", dateKey(range.from));
+    url.searchParams.set("to", dateKey(range.to));
 
     const response = await fetch(url.toString(), { cache: "no-store" });
     if (!response.ok) throw new Error(`Backend HTTP ${response.status}`);
@@ -304,10 +391,11 @@ async function fetchLiveCalendar() {
     liveCalendarEvents = rows.map(normalizeEvent);
 
     const updated = payload.updated_at ? new Date(payload.updated_at).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short", hour12: false }) : "baru saja";
+    const windowLabel = payload.from && payload.to ? `${payload.from} sampai ${payload.to}` : `${dateKey(range.from)} sampai ${dateKey(range.to)}`;
     if (payload.mode === "live") {
-      liveStatus("Live Data", `${payload.source || "Economic calendar backend aktif."} · ${timezoneLabel()} · Update ${updated}`);
+      liveStatus("Live Data", `${payload.source || "Economic calendar backend aktif."} · ${timezoneLabel()} · ${windowLabel} · Update ${updated}`);
     } else if (payload.mode === "fallback") {
-      liveStatus("Fallback Data", `${payload.errors?.join(" | ") || "Source utama gagal."} · ${timezoneLabel()} · Update ${updated}`);
+      liveStatus("Fallback Data", `${payload.errors?.join(" | ") || "Source utama gagal."} · ${timezoneLabel()} · ${windowLabel} · Update ${updated}`);
     } else {
       liveStatus("Backend Sample", payload.error ? `Backend aktif, source error: ${payload.error}` : `Backend aktif, source belum mengirim data live. · ${timezoneLabel()}`);
     }
@@ -332,6 +420,12 @@ function syncAllCheckboxGroup(changed, groupClass) {
   if (!boxes.some((box) => box.checked)) allBox.checked = true;
 }
 
+function activateRange(range) {
+  liveCalendarRange = range || "today";
+  $$live(".calendar-range").forEach((button) => button.classList.toggle("active", button.dataset.range === liveCalendarRange));
+  toggleCustomRange();
+}
+
 function bindLiveCalendar() {
   document.addEventListener("change", (event) => {
     if (event.target.matches(".calendar-currency-option")) {
@@ -346,10 +440,19 @@ function bindLiveCalendar() {
   }, true);
 
   document.addEventListener("click", async (event) => {
-    const range = event.target.closest(".calendar-range");
-    if (!range) return;
-    liveCalendarRange = range.dataset.range || "today";
+    const rangeButton = event.target.closest(".calendar-range");
+    if (!rangeButton) return;
+    activateRange(rangeButton.dataset.range || "today");
     setTimeout(fetchLiveCalendar, 50);
+  }, true);
+
+  document.addEventListener("click", async (event) => {
+    if (event.target.closest("#calendar-apply-custom")) {
+      event.preventDefault();
+      event.stopPropagation();
+      activateRange("custom");
+      await fetchLiveCalendar();
+    }
   }, true);
 
   document.addEventListener("click", async (event) => {
@@ -373,7 +476,9 @@ function bindLiveCalendar() {
 window.addEventListener("DOMContentLoaded", () => {
   bindLiveCalendar();
   setTimeout(() => {
+    setDefaultCustomDates();
     updateRangeLabels();
+    toggleCustomRange();
     fetchLiveCalendar();
   }, 1600);
 });
