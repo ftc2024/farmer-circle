@@ -1,3 +1,5 @@
+import "./profile-force-layout.js?v=20260706-profile-force-1";
+
 function injectProfileNeonStyle() {
   if (document.querySelector("#profile-neon-style")) return;
 
